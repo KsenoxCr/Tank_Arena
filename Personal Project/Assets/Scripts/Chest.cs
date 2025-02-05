@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Chest : MonoBehaviour
 {
+    private GameManager gameManager;
+
     private GameObject player;
     private PlayerController playerController;
 
@@ -12,6 +14,7 @@ public class Chest : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         player = GameObject.Find("Player");
         playerController = player.GetComponent<PlayerController>();
         chestAnim = GetComponentInChildren<Animator>();
@@ -48,6 +51,6 @@ public class Chest : MonoBehaviour
         }
 
         Destroy(gameObj);
-        playerController.StartNewRound();
+        gameManager.StartNewRound();
     }
 }

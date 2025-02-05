@@ -371,10 +371,7 @@ MonoBehaviour:
   - {fileID: 2132874388}
   - {fileID: 486935057}
   movingPointPositions: []
-  round: 1
-  lastRound: 25
-  prevRound: 0
-  enemyCount: 0
+  takenSpawnPositions: []
 --- !u!4 &65668197
 Transform:
   m_ObjectHideFlags: 0
@@ -3843,6 +3840,56 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1486622701}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1531626551
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1531626553}
+  - component: {fileID: 1531626554}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1531626553
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1531626551}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1531626554
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1531626551}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b9531b828b63424ea21f11bbfdb5eb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  round: 0
+  lastRound: 25
+  prevRound: 0
+  enemyCount: 0
+  roundTime: 0
+  startShootingCooldown: 2
 --- !u!1 &1566956387
 GameObject:
   m_ObjectHideFlags: 0
@@ -4876,3 +4923,4 @@ SceneRoots:
   - {fileID: 2008213303}
   - {fileID: 891813662}
   - {fileID: 65668197}
+  - {fileID: 1531626553}

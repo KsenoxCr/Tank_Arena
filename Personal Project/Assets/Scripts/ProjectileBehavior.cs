@@ -17,7 +17,8 @@ public class ProjectileBehavior : MonoBehaviour
     //private PlayerController playerControllerScript;
     private Vector3 bulletDirection;
 
-    private SpawnManager spawnManagerScript;
+    private GameManager gameManager;
+    private SpawnManager spawnManager;
 
     public delegate void AllEnemiesKilledEventHandler(EnemyEventArgs enemyPos);
 
@@ -36,15 +37,13 @@ public class ProjectileBehavior : MonoBehaviour
         this.shooter = shooter;
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         bc = GetComponent<BoxCollider>();
-        spawnManagerScript = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
-        //playerControllerScript = GameObject.Find("Player").GetComponent<PlayerController>();
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
     }
 
-    // Update is called once per frame
     void Update()
     {
         Debug.DrawLine(transform.position, transform.position + transform.forward, Color.blue);
@@ -65,14 +64,15 @@ public class ProjectileBehavior : MonoBehaviour
 
             Destroy(gameObject);
             Destroy(other.gameObject);
-            spawnManagerScript.enemyCount--;
+            gameManager.enemyCount--;
 
-            if (spawnManagerScript.enemyCount == 0)
+            if (gameManager.enemyCount == 0)
             {
                 OnAllEnemiesKilled(enemyPos);
             }
         }
-        else if (other.gameObject.CompareTag("Player") && shooter.CompareTag("Enemy"))
+        else if (other.gameObject.CompareTag("Player") && shooter.CompareTag("Enemy")) 
+         //The object of type 'UnityEngine.GameObject' has been destroyed but you are still trying to access it.
         {
             Destroy(gameObject);
             PlayerController.hp--;

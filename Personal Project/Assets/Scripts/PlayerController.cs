@@ -177,20 +177,4 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Player's Healthpoints: " + hp);
         }
     }
-
-    public void StartNewRound()
-    {
-        Destroy(GameObject.FindGameObjectWithTag("Life Up"));
-
-        spawnManagerScript.round++;
-
-        Debug.Log("Round: " + spawnManagerScript.round);
-
-        // Finishing round 50, player wins
-
-        if (spawnManagerScript.round > spawnManagerScript.lastRound)
-        {
-            Debug.Log("You win!");
-        }
-    }
 }
