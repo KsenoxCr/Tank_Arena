@@ -10,6 +10,8 @@ using Vector3 = UnityEngine.Vector3;
 
 public class SpawnManager : MonoBehaviour
 {
+    private GameManager gameManager;
+
     public GameObject enemyPrefab;
     public GameObject chestPrefab;
     public GameObject lifeUpPrefab;
@@ -21,17 +23,19 @@ public class SpawnManager : MonoBehaviour
     public GameObject[] movingPoints = new GameObject[22];
     public Vector3[] movingPointPositions;
     private Vector3[] cornerMovingPoints;
-    private List<Vector3> takenSpawnPositions = new();
+    public List<Vector3> takenSpawnPositions = new();
 
-    public int round = 1;
-    public int lastRound = 25;
-    public int prevRound = 0;
-    public int enemyCount = 0;
-    public static float roundTime = 0;
-    public static float startShootingCooldown = 2f;
+    void Awake()
+    {
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+    }
 
     void Start()
     {
+        GameObject gameManagerGameObject = GameObject.Find("GameManager");
+        //gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        //gameManager = gameManagerObject.GetComponent<GameManager>();
+
         // subscribing to the projectileBehaviour AllEnemiesKilled event
 
         ProjectileBehavior.AllEnemiesKilled -= OnAllEnemiesKilled;
@@ -52,25 +56,13 @@ public class SpawnManager : MonoBehaviour
         cornerMovingPoints = new Vector3[4] { movingPointPositions[1], movingPointPositions[3],
                                               movingPointPositions[5] , movingPointPositions[7] };
 
-        //Debug.Log(debugMSG);
-
-        SpawnEnemyWave(round);
-        SpawnChest();
-        SpawnLifeUp();
+        gameManager.StartNewRound();
     }
 
     // Update is called once per frame
     void Update()
     {
-        //int enemyCount = GameObject.FindGameObjectsWithTag("Enemy").Length; // Not needed
-
-        if (round > prevRound)
-        {
-            takenSpawnPositions.Clear();
-
-            SpawnEnemyWave(round);
-            SpawnChest();
-        }
+        
     }
 
     //private void OnDrawGizmos()
@@ -82,47 +74,48 @@ public class SpawnManager : MonoBehaviour
     //    Gizmos.DrawCube(cornerMovingPoints[3], new Vector3(1, 1, 1));
     //}
 
-    void SpawnEnemyWave(int round)
+    public void SpawnEnemyWave(int round)
     {
-        prevRound = round;
-        roundTime = Time.time;
+        gameManager.roundTime = Time.time;
 
         if (round >= 1 && round < 3)
         {
-            enemyCount = 1;
+            gameManager.enemyCount = 1;
         }
         else if (round >= 3 && round < 10)
         {
-            enemyCount = 2;
+            gameManager.enemyCount = 2;
         }
         else if (round >= 10 && round < 20)
         {
-            enemyCount = 3;
+            gameManager.enemyCount = 3;
         }
         else if (round >= 20 && round < 26)
         {
-            enemyCount = 4;
+            gameManager.enemyCount = 4;
         }
 
-        if (round == 3 || round == 10 || round == 15 || round == 20)
+        // Spawn Life up on round 1, 3, 10, 15 and 20
+
+        if (round == 1 || round == 3 || round == 10 || round == 15 || round == 20)
         {
             SpawnLifeUp();
         }
 
-        for (int i = 0; i < enemyCount; i++)
+        for (int i = 0; i < gameManager.enemyCount; i++)
         {
             Instantiate(enemyPrefab, RandomCorner(), enemyPrefab.transform.rotation);
         }
     }
 
-    void SpawnChest()
+    public void SpawnChest()
     {
         Vector3 spawningPosition = RandomMovingPoint(2, prevChestPosition);
         Instantiate(chestPrefab, spawningPosition, chestPrefab.transform.rotation);
         prevChestPosition = spawningPosition;
     }
 
-    void SpawnLifeUp()
+    public void SpawnLifeUp()
     {
         Vector3 spawningPosition = RandomMovingPoint(1, prevLifeUpPosition);
         Instantiate(lifeUpPrefab, spawningPosition, lifeUpPrefab.transform.rotation);

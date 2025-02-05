@@ -22,7 +22,9 @@ public class Enemy : MonoBehaviour
     private GameObject player;
     public GameObject bulletPrefab;
     private Rigidbody rb;
-    private SpawnManager spawnManagerScript;
+
+    private GameManager gameManager;
+    private SpawnManager spawnManager;
     private Animator enemyAnimator;
 
     private Vector3[] movingPoints;
@@ -38,10 +40,9 @@ public class Enemy : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         enemyAnimator = GetComponentInChildren<Animator>();
         player = GameObject.Find("Player");
-        
-        // Saving movingPoints from SpawnManager
 
-        spawnManagerScript = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
 
         rb.constraints = RigidbodyConstraints.FreezePosition
                        | RigidbodyConstraints.FreezeRotationZ
@@ -50,7 +51,9 @@ public class Enemy : MonoBehaviour
 
     void Start()
     {
-        movingPoints = spawnManagerScript.movingPointPositions;
+        // Saving movingPoints from SpawnManager
+
+        movingPoints = spawnManager.movingPointPositions;
 
         SetupMovingPossibilities();
 
@@ -70,11 +73,11 @@ public class Enemy : MonoBehaviour
 
         Debug.DrawLine(transform.position, transform.position + transform.forward, Color.cyan);
 
-        if (Time.time - SpawnManager.roundTime >= SpawnManager.startShootingCooldown
+        if (Time.time - gameManager.roundTime >= gameManager.startShootingCooldown
             && Time.time - shootingTime >= shootingCooldown)
         {
             //enemyAnimator.SetBool("isShooting", true);
-            spawnManagerScript.ShootBullet(gameObject);
+            spawnManager.ShootBullet(gameObject);
             //StartCoroutine(StopShootingAnimation());
             shootingTime = Time.time;
         }
