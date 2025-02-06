@@ -53,7 +53,7 @@ public class Enemy : MonoBehaviour
     {
         // Saving movingPoints from SpawnManager
 
-        movingPoints = spawnManager.movingPointPositions;
+        movingPoints = gameManager.movingPointPositions;
 
         SetupMovingPossibilities();
 

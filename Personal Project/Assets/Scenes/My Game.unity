@@ -3886,10 +3886,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   round: 0
   lastRound: 25
-  prevRound: 0
   enemyCount: 0
   roundTime: 0
   startShootingCooldown: 2
+  movingPoints:
+  - {fileID: 1269140673}
+  - {fileID: 1480963672}
+  - {fileID: 637826413}
+  - {fileID: 517993020}
+  - {fileID: 421616211}
+  - {fileID: 46108685}
+  - {fileID: 1486622701}
+  - {fileID: 1261017625}
+  - {fileID: 1443990798}
+  - {fileID: 741859883}
+  - {fileID: 1601864804}
+  - {fileID: 1901917214}
+  - {fileID: 439098901}
+  - {fileID: 1566956387}
+  - {fileID: 1090375335}
+  - {fileID: 998900268}
+  - {fileID: 856588298}
+  - {fileID: 84082883}
+  - {fileID: 1602941135}
+  - {fileID: 1063336770}
+  - {fileID: 2132874388}
+  - {fileID: 486935057}
+  movingPointPositions: []
 --- !u!1 &1566956387
 GameObject:
   m_ObjectHideFlags: 0

@@ -8,6 +8,10 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using Vector3 = UnityEngine.Vector3;
 
+// 1. Change movingPoints to GameManager and add each point on inspector
+// 2. Move movingPointPositions and its loop to GameManager
+// 3. Refactor previous uses of those variables to GameManager.variable
+
 public class SpawnManager : MonoBehaviour
 {
     private GameManager gameManager;
@@ -20,9 +24,6 @@ public class SpawnManager : MonoBehaviour
     private Vector3 prevChestPosition = new Vector3(0, 0, 0);
     private Vector3 prevLifeUpPosition = new Vector3(0, 0, 0);
 
-    public GameObject[] movingPoints = new GameObject[22];
-    public Vector3[] movingPointPositions;
-    private Vector3[] cornerMovingPoints;
     public List<Vector3> takenSpawnPositions = new();
 
     void Awake()
@@ -32,31 +33,10 @@ public class SpawnManager : MonoBehaviour
 
     void Start()
     {
-        GameObject gameManagerGameObject = GameObject.Find("GameManager");
-        //gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-        //gameManager = gameManagerObject.GetComponent<GameManager>();
-
         // subscribing to the projectileBehaviour AllEnemiesKilled event
 
         ProjectileBehavior.AllEnemiesKilled -= OnAllEnemiesKilled;
         ProjectileBehavior.AllEnemiesKilled += OnAllEnemiesKilled;
-
-        // Adding movingPoints positions to dictionary
-
-        movingPointPositions = new Vector3[movingPoints.Length];
-
-        for (int i = 0; i < movingPoints.Length; i++)
-        {
-            movingPointPositions[i] = movingPoints[i].transform.position;
-            //debugMSG += movingPointPositions[i].ToString() + "\n";
-        }
-
-        // Saving corner movingPoints
-
-        cornerMovingPoints = new Vector3[4] { movingPointPositions[1], movingPointPositions[3],
-                                              movingPointPositions[5] , movingPointPositions[7] };
-
-        gameManager.StartNewRound();
     }
 
     // Update is called once per frame
@@ -135,8 +115,8 @@ public class SpawnManager : MonoBehaviour
 
         do
         {
-            int randomIndex = Random.Range(minInclusive, movingPointPositions.Length);
-            randomMovingPoint = movingPointPositions[randomIndex];
+            int randomIndex = Random.Range(minInclusive, gameManager.movingPointPositions.Length);
+            randomMovingPoint = gameManager.movingPointPositions[randomIndex];
 
         } while (takenSpawnPositions.Contains(randomMovingPoint) || randomMovingPoint == prevPoint);
 
@@ -153,8 +133,8 @@ public class SpawnManager : MonoBehaviour
 
         do
         {
-            int randomIndex = Random.Range(0, cornerMovingPoints.Length);
-            randomCorner = cornerMovingPoints[randomIndex];
+            int randomIndex = Random.Range(0, gameManager.cornerMovingPoints.Length);
+            randomCorner = gameManager.cornerMovingPoints[randomIndex];
 
         } while (takenSpawnPositions.Contains(randomCorner));
 
