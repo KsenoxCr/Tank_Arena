@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2192401284105304923}
   - component: {fileID: 4197966585927562862}
   - component: {fileID: 1100525214851207255}
+  - component: {fileID: 3637159981807684189}
   m_Layer: 0
   m_Name: Life Up
   m_TagString: Life Up
@@ -137,6 +138,82 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.9716212, y: 0.25420284, z: 0.93108106}
   m_Center: {x: -0.002026876, y: -0.17936277, z: -0.079054795}
+--- !u!114 &3637159981807684189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6248550702875480343}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca6c4a2ae5b653d4da56baa3a520f389, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeSettings:
+    fadeValue: 0
+    enableOnStart: 1
+    constantShake: 1
+    fadeInDuration: 1
+    fadeInCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 2
+        outSlope: 2
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    holdDuration: 0
+    fadeOutDuration: 1
+    fadeOutCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0.016666412
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.9916687
+        value: 0.0070762634
+        inSlope: 0.02483903
+        outSlope: 0.02483903
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.09741809
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  preset: {fileID: 11400000, guid: 1b8584851d6f51d4094875063e549a62, type: 2}
+  positionShake:
+    noiseType: 0
+    amplitude: {x: 0.1, y: 0.2, z: 0.1}
+    frequency: {x: 0.1, y: 0.2, z: 0.1}
+  rotationShake:
+    noiseType: 0
+    amplitude: {x: 0, y: 0, z: 0}
+    frequency: {x: 0, y: 0, z: 0}
 --- !u!1001 &1380284349707165036
 PrefabInstance:
   m_ObjectHideFlags: 0
