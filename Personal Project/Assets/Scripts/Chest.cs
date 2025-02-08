@@ -6,18 +6,21 @@ public class Chest : MonoBehaviour
 {
     private GameManager gameManager;
 
-    private GameObject player;
     private PlayerController playerController;
 
     private Animator chestAnim;
+    private AudioSource audioSource;
+    [SerializeField] private AudioClip chestOpenAudio;
+    [SerializeField] private AudioClip roundCompleteAudio;
+    [SerializeField] private ParticleSystem[] fireworks;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-        player = GameObject.Find("Player");
-        playerController = player.GetComponent<PlayerController>();
+        playerController = GameObject.Find("Player").GetComponent<PlayerController>();
         chestAnim = GetComponentInChildren<Animator>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -26,31 +29,42 @@ public class Chest : MonoBehaviour
 
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnTriggerEnter(Collider other)
     {
-        if (collision.collider.gameObject.CompareTag("Player") && playerController.hasKey)
+        if (other.gameObject.CompareTag("Player") && playerController.hasKey)
         {
-            // Next Round starts
+            audioSource.PlayOneShot(chestOpenAudio, 0.4f);
+            chestAnim.Play("Open");
+
+            Invoke("PlayRandomFirework", 0.4f);
+
             playerController.hasKey = false;
 
-            //chestAnimator.SetBool("isOpen", true);
-            chestAnim.Play("Open");
-            Debug.Log("SetBool should set isOpen to true here");
-            StartCoroutine(WaitForAnimationEnd(gameObject));
+            StartCoroutine(DestroyOnEnd());
         }
     }
 
-    IEnumerator WaitForAnimationEnd(GameObject gameObj)
+    private void PlayRandomFirework()
     {
-        while (!chestAnim.GetCurrentAnimatorStateInfo(0).IsName("Close"))
-            //while (!chestAnim.GetCurrentAnimatorStateInfo(0).IsName("Close") &&
-            //       chestAnim.GetCurrentAnimatorStateInfo(0).normalizedTime < 1 &&
-            //       chestAnim.IsInTransition(0)) // Might not be needed
+        audioSource.PlayOneShot(roundCompleteAudio, 0.1f);
+
+        int randomIndex = Random.Range(0, fireworks.Length);
+
+        if (!fireworks[randomIndex].isPlaying)
+        {
+            fireworks[randomIndex].Play();
+        }
+    }
+
+    IEnumerator DestroyOnEnd()
+    {
+        while (!chestAnim.GetCurrentAnimatorStateInfo(0).IsName("Close")
+               || audioSource.isPlaying)
         {
             yield return null;
         }
 
-        Destroy(gameObj);
+        Destroy(gameObject);
         gameManager.StartNewRound();
     }
 }

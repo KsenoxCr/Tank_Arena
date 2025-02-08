@@ -20,18 +20,6 @@ public class ProjectileBehavior : MonoBehaviour
     private GameManager gameManager;
     private SpawnManager spawnManager;
 
-    public delegate void AllEnemiesKilledEventHandler(EnemyEventArgs enemyPos);
-
-    public static event AllEnemiesKilledEventHandler AllEnemiesKilled;
-
-    protected virtual void OnAllEnemiesKilled(Vector3 enemyPos)
-    {
-        if (AllEnemiesKilled != null)
-        {
-            AllEnemiesKilled(new EnemyEventArgs() { EnemyPos = enemyPos });
-        }
-    }
-
     public void Initialize(GameObject shooter)
     {
         this.shooter = shooter;
@@ -60,23 +48,20 @@ public class ProjectileBehavior : MonoBehaviour
         }
         else if (other.gameObject.CompareTag("Enemy") && shooter.CompareTag("Player"))
         {
-            Vector3 enemyPos = other.gameObject.transform.position;
-
             Destroy(gameObject);
-            Destroy(other.gameObject);
-            gameManager.enemyCount--;
 
-            if (gameManager.enemyCount == 0)
-            {
-                OnAllEnemiesKilled(enemyPos);
-            }
+            Enemy enemy = other.gameObject.GetComponent<Enemy>();
+            enemy.Kill();
         }
         else if (other.gameObject.CompareTag("Player") && shooter.CompareTag("Enemy")) 
          //The object of type 'UnityEngine.GameObject' has been destroyed but you are still trying to access it.
+         //Might have fixed the error by setting player inactive instead of destroying it
         {
             Destroy(gameObject);
-            PlayerController.hp--;
-            Debug.Log("Player's hp: " + PlayerController.hp);
+
+            PlayerController playerController = other.gameObject.GetComponent<PlayerController>();
+            playerController.hp--;
+            Debug.Log("Player's hp: " + playerController.hp);
         }
     }
 }

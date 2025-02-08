@@ -5,11 +5,10 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-
     [Header("Player Settings")]
-    public float speed = 7.5f;
-    public float rotationSpeed = 150f;
-    public static int hp = 4;
+    [SerializeField] float speed = 7.5f;
+    [SerializeField] float rotationSpeed = 150f;
+    public int hp = 4;
     public bool hasKey;
     private float shootingCooldown = 0.5f;
     private float shootingTime = 0f;
@@ -19,11 +18,28 @@ public class PlayerController : MonoBehaviour
     private Rigidbody rb;
     private BoxCollider bc;
 
-    public GameObject bulletPrefab;
-    private SpawnManager spawnManagerScript;
+    private GameManager gameManager;
+    private SpawnManager spawnManager;
+
+    [SerializeField] private ParticleSystem leftRearTireSmoke;
+    [SerializeField] private ParticleSystem rightRearTireSmoke;
+    [SerializeField] private ParticleSystem leftFrontTireSmoke;
+    [SerializeField] private ParticleSystem rightFrontTireSmoke;
+
+    private ParticleSystem.EmissionModule leftRearEm;
+    private ParticleSystem.EmissionModule rightRearEm;
+    private ParticleSystem.EmissionModule leftFrontEm;
+    private ParticleSystem.EmissionModule rightFrontEm;
+
+    [SerializeField] private ParticleSystem keySpark;
+    [SerializeField] private ParticleSystem deathExplosion;
+
+    private AudioSource audioSource;
+    [SerializeField] private AudioClip shootingAudio;
+    [SerializeField] private AudioClip deathAudio;
 
     private float horizontalInput;
-    private float verticalInput;
+    [SerializeField] private float verticalInput;
     private float reverse;
     public Vector3 eulerAngleVelocity;
 
@@ -35,13 +51,25 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         bc = GetComponent<BoxCollider>();
-        spawnManagerScript = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
+        audioSource = GetComponent<AudioSource>();
 
         eulerAngleVelocity = new Vector3(0, rotationSpeed, 0);
     }
 
     void Start()
     {
+        leftRearEm = leftRearTireSmoke.emission;
+        rightRearEm = rightRearTireSmoke.emission;
+        leftFrontEm = leftFrontTireSmoke.emission;
+        rightFrontEm = rightFrontTireSmoke.emission;
+
+        leftFrontEm.enabled = false;
+        rightFrontEm.enabled = false;
+        leftRearEm.enabled = false;
+        rightRearEm.enabled = false;
+
         hp = 4; // Not needed after development without reloading domain and scene
         hasKey = false;
         Debug.Log("Player's Healthpoints: " + hp);
@@ -59,26 +87,42 @@ public class PlayerController : MonoBehaviour
 
         StopPlayerOnCollision();
 
-        MovePlayer();
+        if (!gameManager.isGameOver)
+        {
+            MovePlayer();
+        }
     }
     
     void Update()
     {
-        if (hp <= 0)
+        EnableTireSmokeParticles();
+
+        if (hp <= 0 && !gameManager.isGameOver)
         {
             // Game Over
 
-            Debug.Log("Game Over");
-            Destroy(gameObject);
+            gameManager.isGameOver = true;
+
+            if (!deathExplosion.isPlaying)
+            {
+                deathExplosion.Play();
+            }
+
+            StopDisplayingPlayer();
+
+            audioSource.PlayOneShot(deathAudio, 0.8f);
+
+            StartCoroutine(DestroyPlayerOnEnd());
         }
 
         // Player Shooting
 
-        if (Input.GetKey(KeyCode.Space) && Time.time - shootingTime >= shootingCooldown)
+        if (Input.GetKey(KeyCode.Space) && !gameManager.isGameOver && Time.time - shootingTime >= shootingCooldown)
         {
-            spawnManagerScript.ShootBullet(gameObject);
+            audioSource.PlayOneShot(shootingAudio, 0.3f);
+            spawnManager.ShootBullet(gameObject);
             shootingTime = Time.time;
-        }        
+        }
     }
 
     void MovePlayer()
@@ -105,7 +149,7 @@ public class PlayerController : MonoBehaviour
         RaycastHit frontHit;
         if (Physics.Raycast(frontRay, out frontHit, raysDistance))
         {
-            Debug.DrawLine(transform.position, frontHit.point, Color.red);
+            //Debug.DrawLine(transform.position, frontHit.point, Color.red);
 
             // Stop Player's forward movement
             if (verticalInput >= 0 && !frontHit.collider.CompareTag("Projectile"))
@@ -116,8 +160,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            // Visualize the raycast in the Scene view
-            Debug.DrawLine(transform.position, transform.position + transform.forward * raysDistance, Color.green);
+            //Debug.DrawLine(transform.position, transform.position + transform.forward * raysDistance, Color.green);
         }
 
 
@@ -128,7 +171,7 @@ public class PlayerController : MonoBehaviour
         RaycastHit backHit;
         if (Physics.Raycast(backRay, out backHit, raysDistance))
         {
-            Debug.DrawLine(transform.position, backHit.point, Color.red);
+            //Debug.DrawLine(transform.position, backHit.point, Color.red);
 
             // Stop Player's backward movement
 
@@ -140,9 +183,36 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            // Visualize the raycast in the Scene view
-            Debug.DrawLine(transform.position, transform.position - transform.forward * raysDistance, Color.green);
+            //Debug.DrawLine(transform.position, transform.position - transform.forward * raysDistance, Color.green);
         }
+    }
+
+    void StopDisplayingPlayer()
+    {
+        MeshRenderer[] meshRenderers = GetComponentsInChildren<MeshRenderer>();
+        foreach (MeshRenderer renderer in meshRenderers)
+        {
+            renderer.enabled = false;
+        }
+    }
+
+    void EnableTireSmokeParticles()
+    {
+        leftRearEm.enabled = verticalInput > 0 ? true : false;
+        rightRearEm.enabled = verticalInput > 0 ? true : false;
+
+        leftFrontEm.enabled = verticalInput < 0 ? true : false;
+        rightFrontEm.enabled = verticalInput < 0 ? true : false;
+    }
+
+    IEnumerator DestroyPlayerOnEnd()
+    {
+        while (audioSource.isPlaying || deathExplosion.isPlaying)
+        {
+            yield return new WaitForSeconds(0f);
+        }
+
+        Destroy(gameObject);
     }
 
     private void OnCollisionStay(Collision collision)
@@ -156,25 +226,6 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Player's Healthpoints: " + hp);
 
             damageTime = Time.time;
-        }
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.collider.gameObject.CompareTag("Key"))
-        {
-            Destroy(collision.collider.transform.parent.gameObject);
-            hasKey = true;
-        }
-        else if (collision.collider.gameObject.CompareTag("Life Up"))
-        {
-            // Player hp increased by 2 
-
-            hp = hp <= 2 ? hp + 2 : 4;
-
-            Destroy(collision.collider.gameObject);
-
-            Debug.Log("Player's Healthpoints: " + hp);
         }
     }
 }
