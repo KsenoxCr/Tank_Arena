@@ -35,8 +35,12 @@ public class SpawnManager : MonoBehaviour
     {
         // subscribing to the projectileBehaviour AllEnemiesKilled event
 
-        ProjectileBehavior.AllEnemiesKilled -= OnAllEnemiesKilled;
-        ProjectileBehavior.AllEnemiesKilled += OnAllEnemiesKilled;
+        Enemy.AllEnemiesKilled += OnAllEnemiesKilled;
+    }
+
+    void OnDisable()
+    {
+        Enemy.AllEnemiesKilled -= OnAllEnemiesKilled;
     }
 
     // Update is called once per frame

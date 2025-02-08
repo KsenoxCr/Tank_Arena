@@ -13,15 +13,21 @@ public class Enemy : MonoBehaviour
 {
     [Header("Enemy's Settings")]
     [SerializeField] private readonly float movementSpeed = 5f;
-    [SerializeField] private readonly float rotationSpeed = 1.0f;
-    [SerializeField] private bool canMove = true;
+    private bool canMove = true;
+    private bool canShoot = true;
 
     private readonly float shootingCooldown = 0.5f;
     private float shootingTime = 0f;
 
-    private GameObject player;
-    public GameObject bulletPrefab;
     private Rigidbody rb;
+
+    [SerializeField] private ParticleSystem bloodSplatter;
+    [SerializeField] private ParticleSystem dirtSplatter;
+    private ParticleSystem.EmissionModule dirtSplatterEm;
+
+    private AudioSource audioSource;
+    [SerializeField] private AudioClip shootingAudio;
+    [SerializeField] private AudioClip deathAudio;
 
     private GameManager gameManager;
     private SpawnManager spawnManager;
@@ -35,11 +41,23 @@ public class Enemy : MonoBehaviour
 
     private Vector3 lastPosition;
 
+    public delegate void AllEnemiesKilledEventHandler(EnemyEventArgs enemyPos);
+
+    public static event AllEnemiesKilledEventHandler AllEnemiesKilled;
+
+    protected virtual void OnAllEnemiesKilled(Vector3 enemyPos)
+    {
+        if (AllEnemiesKilled != null)
+        {
+            AllEnemiesKilled(new EnemyEventArgs() { EnemyPos = enemyPos });
+        }
+    }
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         enemyAnimator = GetComponentInChildren<Animator>();
-        player = GameObject.Find("Player");
+        audioSource = GetComponent<AudioSource>();
 
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
@@ -51,6 +69,9 @@ public class Enemy : MonoBehaviour
 
     void Start()
     {
+        dirtSplatterEm = dirtSplatter.emission;
+        dirtSplatterEm.enabled = true;
+
         // Saving movingPoints from SpawnManager
 
         movingPoints = gameManager.movingPointPositions;
@@ -73,9 +94,10 @@ public class Enemy : MonoBehaviour
 
         Debug.DrawLine(transform.position, transform.position + transform.forward, Color.cyan);
 
-        if (Time.time - gameManager.roundTime >= gameManager.startShootingCooldown
+        if (canShoot && Time.time - gameManager.roundTime >= gameManager.startShootingCooldown
             && Time.time - shootingTime >= shootingCooldown)
         {
+            audioSource.PlayOneShot(shootingAudio, 0.05f);
             //enemyAnimator.SetBool("isShooting", true);
             spawnManager.ShootBullet(gameObject);
             //StartCoroutine(StopShootingAnimation());
@@ -226,6 +248,42 @@ public class Enemy : MonoBehaviour
         movingPossibilities.Add(21, new Vector3[3] { movingPoints[20], movingPoints[18], Vector3.zero });
     }
 
+    public void Kill()
+    {
+        canMove = false;
+        canShoot = false;
+        dirtSplatterEm.enabled = false; 
+
+        if (!bloodSplatter.isPlaying)
+        {
+            bloodSplatter.Play();
+        }
+
+        GetComponentInChildren<SkinnedMeshRenderer>().enabled = false;
+
+        audioSource.PlayOneShot(deathAudio, 0.3f);
+
+        gameManager.enemyCount--;
+
+        StartCoroutine(DestroyEnemyOnEnd());
+
+        //if (--gameManager.enemyCount == 0)
+        if (gameManager.enemyCount == 0)
+        {
+            OnAllEnemiesKilled(transform.position);
+        }
+    }
+
+    IEnumerator DestroyEnemyOnEnd()
+    {
+        while (audioSource.isPlaying || bloodSplatter.isPlaying)
+        {
+            yield return new WaitForSeconds(0);
+        }
+
+        Destroy(gameObject);
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.collider.gameObject.CompareTag("Chest") || 
@@ -243,6 +301,7 @@ public class Enemy : MonoBehaviour
             // Stop enemy movement when colliding with player 
 
             canMove = false;
+            dirtSplatterEm.enabled = false;
         }
     }
 
@@ -253,12 +312,7 @@ public class Enemy : MonoBehaviour
             // Allow enemy movement when stopping colliding with player 
 
             canMove = true;
+            dirtSplatterEm.enabled = true;
         }
-    }
-
-    IEnumerator StopShootingAnimation()
-    {
-        yield return new WaitForSeconds(0.5f); // instead of seconds, reference the shooting animations length
-        enemyAnimator.SetBool("isShooting", false);
     }
 }

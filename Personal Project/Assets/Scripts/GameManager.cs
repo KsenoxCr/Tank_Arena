@@ -3,11 +3,12 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public int round;
+    public int round = 0;
     public int lastRound = 25;
     public int enemyCount = 0;
     public float roundTime = 0;
     public float startShootingCooldown = 2f;
+    public bool isGameOver = false;
 
     public GameObject[] movingPoints = new GameObject[22];
     public Vector3[] movingPointPositions;
