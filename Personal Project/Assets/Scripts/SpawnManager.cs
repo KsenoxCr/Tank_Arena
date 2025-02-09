@@ -151,11 +151,15 @@ public class SpawnManager : MonoBehaviour
     {
         // Spawning a bullet infront of shooter
 
-        Vector3 offset = shooter.transform.forward * 1.1f;
+        Vector3 offset;
 
         if (shooter.CompareTag("Enemy"))
         {
-            offset += GetEnemyBulletOffset(shooter);
+            offset = GetEnemyBulletOffset(shooter);
+        }
+        else
+        {
+            offset = shooter.transform.forward * 2f + Vector3.up * 1.1f;
         }
 
         GameObject bullet = Instantiate(bulletPrefab, shooter.transform.position + offset, shooter.transform.rotation);
@@ -171,17 +175,18 @@ public class SpawnManager : MonoBehaviour
         Vector3 roundedLocalForward = new Vector3(Mathf.Round(localForward.x), 
                                                   Mathf.Round(localForward.y),
                                                   Mathf.Round(localForward.z));
+        Vector3 offset = gameObj.transform.forward * 1.1f;
 
         if (roundedLocalForward == transform.right)
-            return new Vector3(0, 0, -0.3f);
+            offset += new Vector3(0, 0, -0.3f);
         else if (roundedLocalForward == -transform.right)
-            return new Vector3(0, 0, 0.3f);
+            offset += new Vector3(0, 0, 0.3f);
         else if (roundedLocalForward == transform.forward)
-            return new Vector3(0.3f, 0, 0);
+            offset += new Vector3(0.3f, 0, 0);
         else if (roundedLocalForward == -transform.forward)
-            return new Vector3(-0.3f, 0, 0);
-        else 
-            return Vector3.zero;
+            offset += new Vector3(-0.3f, 0, 0);
+
+        return offset;
     }
 
     void OnAllEnemiesKilled(EnemyEventArgs e)

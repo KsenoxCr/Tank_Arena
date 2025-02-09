@@ -53,15 +53,13 @@ public class ProjectileBehavior : MonoBehaviour
             Enemy enemy = other.gameObject.GetComponent<Enemy>();
             enemy.Kill();
         }
-        else if (other.gameObject.CompareTag("Player") && shooter.CompareTag("Enemy")) 
+        else if (other.gameObject.CompareTag("Player") && shooter.CompareTag("Enemy") && gameManager.isGamePlaying) 
          //The object of type 'UnityEngine.GameObject' has been destroyed but you are still trying to access it.
-         //Might have fixed the error by setting player inactive instead of destroying it
         {
             Destroy(gameObject);
 
             PlayerController playerController = other.gameObject.GetComponent<PlayerController>();
-            playerController.hp--;
-            Debug.Log("Player's hp: " + playerController.hp);
+            playerController.UpdateHealth(-1);
         }
     }
 }

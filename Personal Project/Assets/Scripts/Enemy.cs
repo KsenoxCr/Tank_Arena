@@ -39,6 +39,8 @@ public class Enemy : MonoBehaviour
     private Vector3 lastMovingPoint;
     private Vector3 nextMovingPoint;
 
+    [SerializeField] private Vector3 rbVelocity; //Debug
+
     private Vector3 lastPosition;
 
     public delegate void AllEnemiesKilledEventHandler(EnemyEventArgs enemyPos);
@@ -94,10 +96,10 @@ public class Enemy : MonoBehaviour
 
         Debug.DrawLine(transform.position, transform.position + transform.forward, Color.cyan);
 
-        if (canShoot && Time.time - gameManager.roundTime >= gameManager.startShootingCooldown
+        if (gameManager.isGamePlaying && canShoot && Time.time - gameManager.roundTime >= gameManager.startShootingCooldown
             && Time.time - shootingTime >= shootingCooldown)
         {
-            audioSource.PlayOneShot(shootingAudio, 0.05f);
+            audioSource.PlayOneShot(shootingAudio, 0.1f);
             //enemyAnimator.SetBool("isShooting", true);
             spawnManager.ShootBullet(gameObject);
             //StartCoroutine(StopShootingAnimation());
@@ -150,7 +152,8 @@ public class Enemy : MonoBehaviour
         // Check if enemy is on the next movingPoint (or close enough to it),
         // get a new next movingPoint and start moving to it
 
-        if (Vector3.Distance(transform.position, nextPoint) < 0.2f)
+        if (Vector3.Distance(transform.position, nextPoint) < 0.1f //There should be a better way than use distance 0.1 but there's too much floating point fluctuation
+            || rb.linearVelocity == Vector3.zero && Vector3.Distance(transform.position, nextPoint) < 0.3f)
         {
             lastMovingPoint = currentMovingPoint;
             currentMovingPoint = nextPoint;
@@ -252,7 +255,8 @@ public class Enemy : MonoBehaviour
     {
         canMove = false;
         canShoot = false;
-        dirtSplatterEm.enabled = false; 
+        dirtSplatterEm.enabled = false;
+        gameObject.tag = "Untagged";
 
         if (!bloodSplatter.isPlaying)
         {
@@ -260,8 +264,9 @@ public class Enemy : MonoBehaviour
         }
 
         GetComponentInChildren<SkinnedMeshRenderer>().enabled = false;
+        Destroy(rb);
 
-        audioSource.PlayOneShot(deathAudio, 0.3f);
+        audioSource.PlayOneShot(deathAudio, 0.8f);
 
         gameManager.enemyCount--;
 

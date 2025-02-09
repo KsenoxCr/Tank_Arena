@@ -1,5 +1,8 @@
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -8,7 +11,15 @@ public class GameManager : MonoBehaviour
     public int enemyCount = 0;
     public float roundTime = 0;
     public float startShootingCooldown = 2f;
-    public bool isGameOver = false;
+    public bool isGamePlaying = false;
+
+    [SerializeField] private GameObject startScreen;
+    [SerializeField] private GameObject gameUi;
+    [SerializeField] private GameObject gameOverScreen;
+    [SerializeField] private TextMeshProUGUI roundText;
+    [SerializeField] private Button startButton;
+
+    [SerializeField] private Button restartButton;
 
     public GameObject[] movingPoints = new GameObject[22];
     public Vector3[] movingPointPositions;
@@ -16,11 +27,8 @@ public class GameManager : MonoBehaviour
 
     private SpawnManager spawnManager;
 
-    void Start()
+    void Awake()
     {
-        round = 0;
-        spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
-
         // saving movingPoints positions to movingPointPositions
 
         movingPointPositions = new Vector3[movingPoints.Length];
@@ -34,28 +42,41 @@ public class GameManager : MonoBehaviour
 
         cornerMovingPoints = new Vector3[4] { movingPointPositions[1], movingPointPositions[3],
             movingPointPositions[5] , movingPointPositions[7] };
-        
-        StartNewRound();
     }
 
-    void Update()
+    void Start()
     {
+        round = 0;
+        spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
+        startButton.onClick.AddListener(StartNewRound);
+        restartButton.onClick.AddListener(RestartGame);
+    }
+
+    public void UpdateRound()
+    {
+        round++;
+        roundText.text = "Round: " + round;
     }
 
     public void StartNewRound()
     {
+        if (round == 0)
+        {
+            isGamePlaying = true;
+            startScreen.SetActive(false);
+            gameUi.SetActive(true);
+        }
+
         if (round > 0)
         {
             Destroy(GameObject.FindGameObjectWithTag("Life Up"));
             spawnManager.takenSpawnPositions.Clear();
         }
-        round++;
+
+        UpdateRound();
 
         spawnManager.SpawnEnemyWave(round);
         spawnManager.SpawnChest();
-
-
-        Debug.Log("Round: " + round);
 
         // Finishing round 50, player wins
 
@@ -64,4 +85,16 @@ public class GameManager : MonoBehaviour
             Debug.Log("You win!");
         }
     }
+
+    public void GameOver()
+    {
+        isGamePlaying = false;
+
+        gameOverScreen.SetActive(true);
+    }
+
+    void RestartGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    } 
 }

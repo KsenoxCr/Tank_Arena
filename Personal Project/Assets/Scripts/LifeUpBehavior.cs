@@ -21,13 +21,13 @@ public class LifeUpBehavior : MonoBehaviour
         
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collision)
     {
-        if (other.gameObject.CompareTag("Player") && !isUsed)
+        if (collision.collider.gameObject.CompareTag("Player") && !isUsed)
         {
             isUsed = true;
 
-            audioSource.PlayOneShot(healthUpAudio, 0.3f);
+            audioSource.PlayOneShot(healthUpAudio, 0.6f);
 
             GetComponentInChildren<MeshRenderer>().enabled = false;
 
@@ -35,9 +35,7 @@ public class LifeUpBehavior : MonoBehaviour
 
             // Increase Player's health points by 2
 
-            playerController.hp = playerController.hp <= 2 ? playerController.hp + 2 : 4;
-
-            Debug.Log("Player's Healthpoints: " + playerController.hp);
+            playerController.UpdateHealth(2);
         }
     }
 

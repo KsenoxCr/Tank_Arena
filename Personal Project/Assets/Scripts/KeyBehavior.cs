@@ -6,6 +6,7 @@ public class KeyBehavior : MonoBehaviour
 {
     private BoxCollider bc;
     private PlayerController playerController;
+    private GameManager gameManager;
 
     private AudioSource audioSource;
     [SerializeField] private AudioClip gotKeyAudio;
@@ -17,6 +18,7 @@ public class KeyBehavior : MonoBehaviour
     {
         bc = GetComponentInChildren<BoxCollider>();
         playerController = GameObject.Find("Player").GetComponent<PlayerController>();
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         audioSource = GetComponent<AudioSource>();
         //keySpark = GetComponentInChildren<ParticleSystem>();
     }
@@ -28,7 +30,7 @@ public class KeyBehavior : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Player") && !isUsed)
+        if (other.gameObject.CompareTag("Player") && !isUsed && gameManager.isGamePlaying)
         {
             isUsed = true;
             playerController.hasKey = true;
@@ -40,7 +42,7 @@ public class KeyBehavior : MonoBehaviour
 
             GetComponentInChildren<MeshRenderer>().enabled = false;
 
-            audioSource.PlayOneShot(gotKeyAudio, 0.3f);
+            audioSource.PlayOneShot(gotKeyAudio, 0.6f);
 
             StartCoroutine(DestroyKeyOnEnd());
         }
