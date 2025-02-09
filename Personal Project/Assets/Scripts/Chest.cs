@@ -29,11 +29,11 @@ public class Chest : MonoBehaviour
 
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collision)
     {
-        if (other.gameObject.CompareTag("Player") && playerController.hasKey)
+        if (collision.collider.gameObject.CompareTag("Player") && playerController.hasKey && gameManager.isGamePlaying)
         {
-            audioSource.PlayOneShot(chestOpenAudio, 0.4f);
+            audioSource.PlayOneShot(chestOpenAudio, 0.8f);
             chestAnim.Play("Open");
 
             Invoke("PlayRandomFirework", 0.4f);
@@ -46,7 +46,7 @@ public class Chest : MonoBehaviour
 
     private void PlayRandomFirework()
     {
-        audioSource.PlayOneShot(roundCompleteAudio, 0.1f);
+        audioSource.PlayOneShot(roundCompleteAudio, 0.2f);
 
         int randomIndex = Random.Range(0, fireworks.Length);
 

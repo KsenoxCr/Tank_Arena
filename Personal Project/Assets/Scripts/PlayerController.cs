@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
@@ -25,6 +26,13 @@ public class PlayerController : MonoBehaviour
     private GameObject turret;
     private Rigidbody turretRb;
 
+    private readonly float frontRaysDistance = 1.15f;
+    private readonly float backRaysDistance = 1.2f;
+    private Ray frontRay;
+    private Ray backRay;
+
+    [SerializeField] private TextMeshProUGUI healthText;
+
     [SerializeField] private ParticleSystem leftRearTireSmoke;
     [SerializeField] private ParticleSystem rightRearTireSmoke;
     [SerializeField] private ParticleSystem leftFrontTireSmoke;
@@ -48,10 +56,6 @@ public class PlayerController : MonoBehaviour
     private float reverse;
     private Vector3 eulerAngleVelocity;
 
-    public float raysDistance = 0.8f;
-    private Ray frontRay;
-    private Ray backRay;
-
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -61,7 +65,9 @@ public class PlayerController : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         turret = transform.Find("Tank/TurretPivotPoint").gameObject;
         turretRb = turret.GetComponent<Rigidbody>();
-
+        turretRb.automaticCenterOfMass = false;
+        //turretRb.centerOfMass = Vector3.zero; //Doesn't change to 0,0,0 for some reason, had to change in inspector
+        
         eulerAngleVelocity = new Vector3(0, rotationSpeed, 0);
     }
 
@@ -79,7 +85,7 @@ public class PlayerController : MonoBehaviour
 
         hp = 4; // Not needed after development without reloading domain and scene
         hasKey = false;
-        Debug.Log("Player's Healthpoints: " + hp);
+        UpdateHealth(4);
     }
 
     void FixedUpdate()
@@ -94,7 +100,7 @@ public class PlayerController : MonoBehaviour
 
         StopPlayerOnCollision();
 
-        if (!gameManager.isGameOver)
+        if (gameManager.isGamePlaying)
         {
             MoveTurret();
             MovePlayer();
@@ -103,33 +109,18 @@ public class PlayerController : MonoBehaviour
     
     void Update()
     {
-        EnableTireSmokeParticles();
-
-        if (hp <= 0 && !gameManager.isGameOver)
+        if (gameManager.isGamePlaying)
         {
-            // Game Over
+            EnableTireSmokeParticles();
 
-            gameManager.isGameOver = true;
+            // Player Shooting
 
-            if (!deathExplosion.isPlaying)
+            if (Input.GetKey(KeyCode.Space) && Time.time - shootingTime >= shootingCooldown)
             {
-                deathExplosion.Play();
+                audioSource.PlayOneShot(shootingAudio, 0.6f);
+                spawnManager.ShootBullet(turret);
+                shootingTime = Time.time;
             }
-
-            StopDisplayingPlayer();
-
-            audioSource.PlayOneShot(deathAudio, 0.8f);
-
-            StartCoroutine(DestroyPlayerOnEnd());
-        }
-
-        // Player Shooting
-
-        if (Input.GetKey(KeyCode.Space) && !gameManager.isGameOver && Time.time - shootingTime >= shootingCooldown)
-        {
-            audioSource.PlayOneShot(shootingAudio, 0.3f);
-            spawnManager.ShootBullet(turret);
-            shootingTime = Time.time;
         }
     }
 
@@ -157,6 +148,44 @@ public class PlayerController : MonoBehaviour
         turretRb.MoveRotation(turretRb.rotation * deltaRotation);
     }
 
+    public void UpdateHealth(int hpDelta)
+    {
+        hp += hpDelta;
+
+        if (hp > 4)
+        {
+            hp = 4;
+        }
+        else if (hp < 0)
+        {
+            hp = 0;
+        }
+
+        if (hp == 0 && gameManager.isGamePlaying)
+        {
+            // Game Over
+
+            hp = 0;
+
+            //gameManager.isGameOver = true; // Is this better here or in gameManager.GameOver? Is there a big enough delay before we reach GameOver() so that game events can still happen or not
+
+            if (!deathExplosion.isPlaying)
+            {
+                deathExplosion.Play();
+            }
+
+            StopDisplayingPlayer();
+
+            audioSource.PlayOneShot(deathAudio, 1.2f);
+
+            StartCoroutine(DestroyPlayerOnEnd());
+
+            gameManager.GameOver();
+        }
+
+        healthText.text = "Health: " + hp;
+    }
+
     void StopPlayerOnCollision()
     {
         //Checking for forward hits
@@ -164,12 +193,14 @@ public class PlayerController : MonoBehaviour
         frontRay = new Ray(transform.position, transform.forward);
 
         RaycastHit frontHit;
-        if (Physics.Raycast(frontRay, out frontHit, raysDistance))
+        if (Physics.Raycast(frontRay, out frontHit, frontRaysDistance))
         {
-            //Debug.DrawLine(transform.position, frontHit.point, Color.red);
+            Debug.DrawLine(transform.position, frontHit.point, Color.red);
 
             // Stop Player's forward movement
-            if (verticalInput >= 0 && !frontHit.collider.CompareTag("Projectile"))
+            if (verticalInput > 0 && frontHit.collider.CompareTag("Wall")
+                                  && frontHit.collider.CompareTag("Enemy")
+                                  && frontHit.collider.CompareTag("Chest"))
             {
                 rb.linearVelocity = rb.angularVelocity = Vector3.zero;
                 verticalInput = 0;
@@ -177,7 +208,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            //Debug.DrawLine(transform.position, transform.position + transform.forward * raysDistance, Color.green);
+            Debug.DrawLine(transform.position, transform.position + transform.forward * frontRaysDistance, Color.green);
         }
 
 
@@ -186,13 +217,15 @@ public class PlayerController : MonoBehaviour
         backRay = new Ray(transform.position, -transform.forward);
 
         RaycastHit backHit;
-        if (Physics.Raycast(backRay, out backHit, raysDistance))
+        if (Physics.Raycast(backRay, out backHit, backRaysDistance))
         {
-            //Debug.DrawLine(transform.position, backHit.point, Color.red);
+            Debug.DrawLine(transform.position, backHit.point, Color.red);
 
             // Stop Player's backward movement
 
-            if (verticalInput <= 0)
+            if (verticalInput < 0 && frontHit.collider.CompareTag("Wall") 
+                                  && frontHit.collider.CompareTag("Enemy")
+                                  && frontHit.collider.CompareTag("Chest"))
             {
                 rb.linearVelocity = rb.angularVelocity = Vector3.zero;
                 verticalInput = 0;
@@ -200,7 +233,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            //Debug.DrawLine(transform.position, transform.position - transform.forward * raysDistance, Color.green);
+            Debug.DrawLine(transform.position, transform.position - transform.forward * backRaysDistance, Color.green);
         }
     }
 
@@ -238,9 +271,7 @@ public class PlayerController : MonoBehaviour
         {
             // Player takes damage
 
-            hp--;
-
-            Debug.Log("Player's Healthpoints: " + hp);
+            UpdateHealth(-1);
 
             damageTime = Time.time;
         }
