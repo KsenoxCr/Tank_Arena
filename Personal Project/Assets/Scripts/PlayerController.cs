@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class PlayerController : MonoBehaviour
 {
@@ -21,6 +22,9 @@ public class PlayerController : MonoBehaviour
     private GameManager gameManager;
     private SpawnManager spawnManager;
 
+    private GameObject turret;
+    private Rigidbody turretRb;
+
     [SerializeField] private ParticleSystem leftRearTireSmoke;
     [SerializeField] private ParticleSystem rightRearTireSmoke;
     [SerializeField] private ParticleSystem leftFrontTireSmoke;
@@ -38,10 +42,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private AudioClip shootingAudio;
     [SerializeField] private AudioClip deathAudio;
 
-    private float horizontalInput;
+    private float bodyHorizontalInput;
+    private float turretHorizontalInput;
     [SerializeField] private float verticalInput;
     private float reverse;
-    public Vector3 eulerAngleVelocity;
+    private Vector3 eulerAngleVelocity;
 
     public float raysDistance = 0.8f;
     private Ray frontRay;
@@ -54,6 +59,8 @@ public class PlayerController : MonoBehaviour
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
         audioSource = GetComponent<AudioSource>();
+        turret = transform.Find("Tank/TurretPivotPoint").gameObject;
+        turretRb = turret.GetComponent<Rigidbody>();
 
         eulerAngleVelocity = new Vector3(0, rotationSpeed, 0);
     }
@@ -79,16 +86,17 @@ public class PlayerController : MonoBehaviour
     {
         // Saving Player's movement input
 
-        horizontalInput = Input.GetAxis("Horizontal");
+        bodyHorizontalInput = Input.GetAxis("Body_Horizontal");
+        turretHorizontalInput = Input.GetAxis("Turret_Horizontal");
         verticalInput = Input.GetAxis("Vertical");
 
         rb.isKinematic = verticalInput == 0 ? true : false;
-
 
         StopPlayerOnCollision();
 
         if (!gameManager.isGameOver)
         {
+            MoveTurret();
             MovePlayer();
         }
     }
@@ -120,7 +128,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKey(KeyCode.Space) && !gameManager.isGameOver && Time.time - shootingTime >= shootingCooldown)
         {
             audioSource.PlayOneShot(shootingAudio, 0.3f);
-            spawnManager.ShootBullet(gameObject);
+            spawnManager.ShootBullet(turret);
             shootingTime = Time.time;
         }
     }
@@ -135,9 +143,18 @@ public class PlayerController : MonoBehaviour
         {
             reverse = verticalInput > 0 ? 1 : -1;
 
-            Quaternion deltaRotation = Quaternion.Euler(eulerAngleVelocity * Time.fixedDeltaTime * horizontalInput * reverse);
+            Quaternion deltaRotation = Quaternion.Euler(eulerAngleVelocity * Time.fixedDeltaTime * bodyHorizontalInput * reverse);
             rb.MoveRotation(rb.rotation * deltaRotation);
+            turretRb.MoveRotation(turretRb.rotation * deltaRotation);
         }
+    }
+
+    void MoveTurret()
+    {
+        // Turret Movement
+
+        Quaternion deltaRotation = Quaternion.Euler(eulerAngleVelocity * Time.fixedDeltaTime * turretHorizontalInput);
+        turretRb.MoveRotation(turretRb.rotation * deltaRotation);
     }
 
     void StopPlayerOnCollision()

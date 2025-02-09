@@ -11,6 +11,7 @@ TagManager:
   - Civilian
   - Key
   - Chest
+  - Turret
   layers:
   - Default
   - TransparentFX
