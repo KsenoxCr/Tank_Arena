@@ -124,6 +124,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 20
+  gameManager: {fileID: 8192437869288420578, guid: abc91dd6449a8bb43bddf3cbb067380c, type: 3}
 --- !u!54 &-218214886387612947
 Rigidbody:
   m_ObjectHideFlags: 0
