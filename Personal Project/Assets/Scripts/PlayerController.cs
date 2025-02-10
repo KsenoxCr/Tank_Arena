@@ -198,9 +198,9 @@ public class PlayerController : MonoBehaviour
             Debug.DrawLine(transform.position, frontHit.point, Color.red);
 
             // Stop Player's forward movement
-            if (verticalInput > 0 && frontHit.collider.CompareTag("Wall")
-                                  && frontHit.collider.CompareTag("Enemy")
-                                  && frontHit.collider.CompareTag("Chest"))
+            if (verticalInput > 0 && (frontHit.collider.CompareTag("Wall")
+                                  || frontHit.collider.CompareTag("Enemy")
+                                  || frontHit.collider.CompareTag("Chest")))
             {
                 rb.linearVelocity = rb.angularVelocity = Vector3.zero;
                 verticalInput = 0;
@@ -223,9 +223,9 @@ public class PlayerController : MonoBehaviour
 
             // Stop Player's backward movement
 
-            if (verticalInput < 0 && frontHit.collider.CompareTag("Wall") 
-                                  && frontHit.collider.CompareTag("Enemy")
-                                  && frontHit.collider.CompareTag("Chest"))
+            if (verticalInput < 0 && (backHit.collider.CompareTag("Wall") 
+                                      || backHit.collider.CompareTag("Enemy")
+                                      || backHit.collider.CompareTag("Chest")))
             {
                 rb.linearVelocity = rb.angularVelocity = Vector3.zero;
                 verticalInput = 0;

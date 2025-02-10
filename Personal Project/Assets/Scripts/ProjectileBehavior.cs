@@ -17,8 +17,7 @@ public class ProjectileBehavior : MonoBehaviour
     //private PlayerController playerControllerScript;
     private Vector3 bulletDirection;
 
-    private GameManager gameManager;
-    private SpawnManager spawnManager;
+    [SerializeField] private GameManager gameManager;
 
     public void Initialize(GameObject shooter)
     {
@@ -28,8 +27,7 @@ public class ProjectileBehavior : MonoBehaviour
     void Start()
     {
         bc = GetComponent<BoxCollider>();
-        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-        spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
+        //gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
 
     void Update()
@@ -53,7 +51,7 @@ public class ProjectileBehavior : MonoBehaviour
             Enemy enemy = other.gameObject.GetComponent<Enemy>();
             enemy.Kill();
         }
-        else if (other.gameObject.CompareTag("Player") && shooter.CompareTag("Enemy") && gameManager.isGamePlaying) 
+        else if (other.gameObject.CompareTag("Player") && shooter.CompareTag("Enemy")) 
          //The object of type 'UnityEngine.GameObject' has been destroyed but you are still trying to access it.
         {
             Destroy(gameObject);

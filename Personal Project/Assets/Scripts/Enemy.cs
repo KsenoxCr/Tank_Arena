@@ -39,7 +39,7 @@ public class Enemy : MonoBehaviour
     private Vector3 lastMovingPoint;
     private Vector3 nextMovingPoint;
 
-    [SerializeField] private Vector3 rbVelocity; //Debug
+    private Vector3 prevPos;
 
     private Vector3 lastPosition;
 
@@ -87,10 +87,13 @@ public class Enemy : MonoBehaviour
     {
         // Moving enemy towards next movingPoint
 
+
         if (canMove)
         {
             MoveToNextMovingPoint(currentMovingPoint, nextMovingPoint);
         }
+
+        prevPos = transform.position;
 
         ChangeAnimation();
 
@@ -149,11 +152,13 @@ public class Enemy : MonoBehaviour
         rb.MoveRotation(Quaternion.LookRotation(nextPoint - currentPoint, Vector3.up));
         rb.MovePosition(GetInterpolatedPosition(transform.position, nextPoint));
 
+        float velocity = (transform.position - prevPos).sqrMagnitude;
+
         // Check if enemy is on the next movingPoint (or close enough to it),
         // get a new next movingPoint and start moving to it
 
         if (Vector3.Distance(transform.position, nextPoint) < 0.1f //There should be a better way than use distance 0.1 but there's too much floating point fluctuation
-            || rb.linearVelocity == Vector3.zero && Vector3.Distance(transform.position, nextPoint) < 0.3f)
+            || (velocity == 0 && Vector3.Distance(transform.position, nextPoint) < 0.5f))
         {
             lastMovingPoint = currentMovingPoint;
             currentMovingPoint = nextPoint;
@@ -264,7 +269,7 @@ public class Enemy : MonoBehaviour
         }
 
         GetComponentInChildren<SkinnedMeshRenderer>().enabled = false;
-        Destroy(rb);
+        rb.detectCollisions = false;
 
         audioSource.PlayOneShot(deathAudio, 0.8f);
 

@@ -70,11 +70,11 @@ public class SpawnManager : MonoBehaviour
         {
             gameManager.enemyCount = 2;
         }
-        else if (round >= 10 && round < 20)
+        else if (round >= 10 && round < 15)
         {
             gameManager.enemyCount = 3;
         }
-        else if (round >= 20 && round < 26)
+        else if (round >= 15 && round < 21)
         {
             gameManager.enemyCount = 4;
         }
@@ -175,7 +175,7 @@ public class SpawnManager : MonoBehaviour
         Vector3 roundedLocalForward = new Vector3(Mathf.Round(localForward.x), 
                                                   Mathf.Round(localForward.y),
                                                   Mathf.Round(localForward.z));
-        Vector3 offset = gameObj.transform.forward * 1.1f;
+        Vector3 offset = gameObj.transform.forward * 1.15f;
 
         if (roundedLocalForward == transform.right)
             offset += new Vector3(0, 0, -0.3f);
