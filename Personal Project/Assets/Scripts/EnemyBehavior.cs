@@ -9,38 +9,38 @@ using Random = UnityEngine.Random;
 using Color = UnityEngine.Color;
 using Unity.VisualScripting;
 
-public class Enemy : MonoBehaviour
+public class EnemyBehavior : MonoBehaviour
 {
     [Header("Enemy's Settings")]
     [SerializeField] private readonly float movementSpeed = 5f;
+    [SerializeField] private float velocity;
     private bool canMove = true;
     private bool canShoot = true;
-
     private readonly float shootingCooldown = 0.5f;
     private float shootingTime = 0f;
 
-    private Rigidbody rb;
-
+    [Header("Enemy's Particles")]
     [SerializeField] private ParticleSystem bloodSplatter;
     [SerializeField] private ParticleSystem dirtSplatter;
     private ParticleSystem.EmissionModule dirtSplatterEm;
 
-    private AudioSource audioSource;
+    [Header("Enemy's Audio")]
     [SerializeField] private AudioClip shootingAudio;
     [SerializeField] private AudioClip deathAudio;
 
+    private AudioSource audioSource;
+    private Rigidbody rb;
     private GameManager gameManager;
     private SpawnManager spawnManager;
     private Animator enemyAnimator;
 
-    private Vector3[] movingPoints;
     private Dictionary<int, Vector3[]> movingPossibilities;
     private Vector3 currentMovingPoint;
     private Vector3 lastMovingPoint;
     private Vector3 nextMovingPoint;
 
+    private Vector3 prevDirection;
     private Vector3 prevPos;
-
     private Vector3 lastPosition;
 
     public delegate void AllEnemiesKilledEventHandler(EnemyEventArgs enemyPos);
@@ -49,10 +49,12 @@ public class Enemy : MonoBehaviour
 
     protected virtual void OnAllEnemiesKilled(Vector3 enemyPos)
     {
-        if (AllEnemiesKilled != null)
-        {
-            AllEnemiesKilled(new EnemyEventArgs() { EnemyPos = enemyPos });
-        }
+        //if (AllEnemiesKilled != null)
+        //{
+        //    AllEnemiesKilled(new EnemyEventArgs() { EnemyPos = enemyPos });
+        //}
+
+        AllEnemiesKilled?.Invoke(new EnemyEventArgs() { EnemyPos = enemyPos });
     }
 
     private void Awake()
@@ -71,22 +73,21 @@ public class Enemy : MonoBehaviour
 
     void Start()
     {
+        // Enabling dirt splatter particles and
+        // Setting up moving points and starting enemy movement
+
         dirtSplatterEm = dirtSplatter.emission;
         dirtSplatterEm.enabled = true;
 
-        // Saving movingPoints from SpawnManager
+        SetupMovingPossibilities(ref gameManager.movingPointPositions);
 
-        movingPoints = gameManager.movingPointPositions;
-
-        SetupMovingPossibilities();
-
-        FindFirstPointAndStartMoving();
+        //FindFirstPointAndStartMoving();
+        MoveToNextMovingPoint(transform.position, transform.position);
     }
 
     void FixedUpdate()
     {
         // Moving enemy towards next movingPoint
-
 
         if (canMove)
         {
@@ -95,48 +96,51 @@ public class Enemy : MonoBehaviour
 
         prevPos = transform.position;
 
-        ChangeAnimation();
-
         Debug.DrawLine(transform.position, transform.position + transform.forward, Color.cyan);
+
+        // Enemy shooting bullets on interval based on shooting cooldown
 
         if (gameManager.isGamePlaying && canShoot && Time.time - gameManager.roundTime >= gameManager.startShootingCooldown
             && Time.time - shootingTime >= shootingCooldown)
         {
             audioSource.PlayOneShot(shootingAudio, 0.1f);
-            //enemyAnimator.SetBool("isShooting", true);
             spawnManager.ShootBullet(gameObject);
-            //StartCoroutine(StopShootingAnimation());
             shootingTime = Time.time;
         }
     }
 
-    void ChangeAnimation()
-    {
-        if (transform.position == lastPosition)
-        {
-            enemyAnimator.SetBool("isMoving", false);
-        }
-        else
-        {
-            enemyAnimator.SetBool("isMoving", true);
-        }
-        lastPosition = transform.position;
-    }
-
     void FindFirstPointAndStartMoving()
     {
-        // Checking what the first movingPoint is, where enemy spawned
+        // Checking which moving point enemy spawned on
+        // and setting up next moving point to start moving
 
         currentMovingPoint = transform.position;
-        nextMovingPoint = GetNextMovingPoint(movingPossibilities[Array.IndexOf(movingPoints, currentMovingPoint)]);
+        nextMovingPoint = GetNextMovingPoint(movingPossibilities[Array.IndexOf(gameManager.movingPointPositions, currentMovingPoint)]);
 
         MoveToNextMovingPoint(currentMovingPoint, nextMovingPoint);
     }
 
     void MoveToNextMovingPoint(Vector3 currentPoint, Vector3 nextPoint)
     {
-        // Checking the direction of movement and locking rigidbodys position on opposite axis 
-        // (For making sure that player can't push enemy out of it's trajectory
+        // Moving enemy towards next movingPoint
+
+
+        // Calculating velocity to check if enemy is stuck (and for changing animation)
+
+        velocity = (transform.position - prevPos).sqrMagnitude;
+
+        // Getting a new point to move to when
+        // enemy reaches the point it was previously was moving to
+
+        if (Vector3.Distance(transform.position, nextPoint) < 0.1f //There should be a better way than use distance 0.1 but there's too much floating point fluctuation (Try (vector3 - vector3).sqrMagnitude < 0.1f)
+            || (velocity == 0 && Vector3.Distance(transform.position, nextPoint) < 0.5f))
+        {
+            lastMovingPoint = currentMovingPoint;
+            currentMovingPoint = nextPoint;
+            nextMovingPoint = GetNextMovingPoint(movingPossibilities[Array.IndexOf(gameManager.movingPointPositions, currentMovingPoint)]);
+        }
+        // Checking the direction of enemy's movement and locking its rigidbody's position on opposite axis 
+        // to make sure that player can't push the enemy out of its trajectory
 
         Vector3 direction = (currentPoint - nextPoint).normalized;
 
@@ -149,35 +153,18 @@ public class Enemy : MonoBehaviour
             rb.constraints = RigidbodyConstraints.FreezePositionX | ~RigidbodyConstraints.FreezePositionZ;
         }
 
-        rb.MoveRotation(Quaternion.LookRotation(nextPoint - currentPoint, Vector3.up));
+        // Moving enemy towards next movingPoint and rotating it to face the point
+
+        if (direction != prevDirection)
+            rb.MoveRotation(Quaternion.LookRotation(nextPoint - currentPoint, Vector3.up));
         rb.MovePosition(GetInterpolatedPosition(transform.position, nextPoint));
 
-        float velocity = (transform.position - prevPos).sqrMagnitude;
-
-        // Check if enemy is on the next movingPoint (or close enough to it),
-        // get a new next movingPoint and start moving to it
-
-        if (Vector3.Distance(transform.position, nextPoint) < 0.1f //There should be a better way than use distance 0.1 but there's too much floating point fluctuation
-            || (velocity == 0 && Vector3.Distance(transform.position, nextPoint) < 0.5f))
-        {
-            lastMovingPoint = currentMovingPoint;
-            currentMovingPoint = nextPoint;
-            nextMovingPoint = GetNextMovingPoint(movingPossibilities[Array.IndexOf(movingPoints, currentMovingPoint)]);
-
-            MoveToNextMovingPoint(currentMovingPoint, nextMovingPoint);
-        }
+        prevDirection = direction;
     }
 
     Vector3 GetInterpolatedPosition(Vector3 currentPos, Vector3 newPos)
     {
-        //float distanceToTarget = Vector3.Distance(currentPos, newPos);
-
-        //float travelTime = distanceToTarget / speed;
-
-        //float interpolationRatio = (float)elapsedFrames / movingFramesCount;
-
-        //Vector3 interpolatedPosition = Vector3.Lerp(currentPos, newPos, interpolationRatio);
-        //elapsedFrames = (elapsedFrames + 1) % (movingFramesCount + 1);
+        // Interpolating enemy's position to move it smoothly 
 
         var step = movementSpeed * Time.fixedDeltaTime;
 
@@ -186,19 +173,13 @@ public class Enemy : MonoBehaviour
         return interpolatedPos;
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        Gizmos.DrawSphere(currentMovingPoint, 0.5f);
-        //Gizmos.color = Color.red;
-        //Gizmos.DrawLine(transform.position, transform.position + transform.forward); // Debugging GetEnemyBulletOffset
-        Gizmos.color = Color.blue;
-        Gizmos.DrawSphere(nextMovingPoint, 0.5f);
-
-    }
 
     Vector3 GetNextMovingPoint(Vector3[] possibilities)
     {
+        // Getting a random point to move to from the possibilities
+        // Preferring new point over the previous moving point
+        // = Moving forward more often than moving back
+
         Vector3 newPoint = Vector3.zero;
 
         int attemptCount = 0;
@@ -226,38 +207,42 @@ public class Enemy : MonoBehaviour
         return newPoint;
     }
 
-    void SetupMovingPossibilities()
+    void SetupMovingPossibilities(ref Vector3[] movingPoints)
     {
         // Saving movingPossibilities
 
-        movingPossibilities = new Dictionary<int, Vector3[]>();
-
-        movingPossibilities.Add(0, new Vector3[3] { movingPoints[1], movingPoints[8], movingPoints[7] });
-        movingPossibilities.Add(1, new Vector3[3] { movingPoints[2], movingPoints[0], Vector3.zero });
-        movingPossibilities.Add(2, new Vector3[3] { movingPoints[3], movingPoints[1], Vector3.zero });
-        movingPossibilities.Add(3, new Vector3[3] { movingPoints[4], movingPoints[2], Vector3.zero });
-        movingPossibilities.Add(4, new Vector3[3] { movingPoints[5], movingPoints[13], movingPoints[3] });
-        movingPossibilities.Add(5, new Vector3[3] { movingPoints[6], movingPoints[4], Vector3.zero });
-        movingPossibilities.Add(6, new Vector3[3] { movingPoints[7], movingPoints[16], movingPoints[5] });
-        movingPossibilities.Add(7, new Vector3[3] { movingPoints[0], movingPoints[6], Vector3.zero });
-        movingPossibilities.Add(8, new Vector3[3] { movingPoints[9], movingPoints[0], movingPoints[17] });
-        movingPossibilities.Add(9, new Vector3[3] { movingPoints[10], movingPoints[8], movingPoints[18] });
-        movingPossibilities.Add(10, new Vector3[3] { movingPoints[11], movingPoints[9], Vector3.zero });
-        movingPossibilities.Add(11, new Vector3[3] { movingPoints[12], movingPoints[2], movingPoints[10] });
-        movingPossibilities.Add(12, new Vector3[3] { movingPoints[13], movingPoints[11], Vector3.zero });
-        movingPossibilities.Add(13, new Vector3[3] { movingPoints[14], movingPoints[4], movingPoints[12] });
-        movingPossibilities.Add(14, new Vector3[3] { movingPoints[15], movingPoints[20], movingPoints[13] });
-        movingPossibilities.Add(15, new Vector3[3] { movingPoints[16], movingPoints[14], Vector3.zero });
-        movingPossibilities.Add(16, new Vector3[3] { movingPoints[17], movingPoints[6], movingPoints[15] });
-        movingPossibilities.Add(17, new Vector3[3] { movingPoints[8], movingPoints[16], Vector3.zero });
-        movingPossibilities.Add(18, new Vector3[3] { movingPoints[19], movingPoints[9], movingPoints[21] });
-        movingPossibilities.Add(19, new Vector3[3] { movingPoints[20], movingPoints[18], Vector3.zero });
-        movingPossibilities.Add(20, new Vector3[3] { movingPoints[19], movingPoints[14], movingPoints[21] });
-        movingPossibilities.Add(21, new Vector3[3] { movingPoints[20], movingPoints[18], Vector3.zero });
+        movingPossibilities = new Dictionary<int, Vector3[]>
+        {
+            { 0, new Vector3[3] { movingPoints[1], movingPoints[8], movingPoints[7] } },
+            { 1, new Vector3[3] { movingPoints[2], movingPoints[0], Vector3.zero } },
+            { 2, new Vector3[3] { movingPoints[3], movingPoints[1], Vector3.zero } },
+            { 3, new Vector3[3] { movingPoints[4], movingPoints[2], Vector3.zero } },
+            { 4, new Vector3[3] { movingPoints[5], movingPoints[13], movingPoints[3] } },
+            { 5, new Vector3[3] { movingPoints[6], movingPoints[4], Vector3.zero } },
+            { 6, new Vector3[3] { movingPoints[7], movingPoints[16], movingPoints[5] } },
+            { 7, new Vector3[3] { movingPoints[0], movingPoints[6], Vector3.zero } },
+            { 8, new Vector3[3] { movingPoints[9], movingPoints[0], movingPoints[17] } },
+            { 9, new Vector3[3] { movingPoints[10], movingPoints[8], movingPoints[18] } },
+            { 10, new Vector3[3] { movingPoints[11], movingPoints[9], Vector3.zero } },
+            { 11, new Vector3[3] { movingPoints[12], movingPoints[2], movingPoints[10] } },
+            { 12, new Vector3[3] { movingPoints[13], movingPoints[11], Vector3.zero } },
+            { 13, new Vector3[3] { movingPoints[14], movingPoints[4], movingPoints[12] } },
+            { 14, new Vector3[3] { movingPoints[15], movingPoints[20], movingPoints[13] } },
+            { 15, new Vector3[3] { movingPoints[16], movingPoints[14], Vector3.zero } },
+            { 16, new Vector3[3] { movingPoints[17], movingPoints[6], movingPoints[15] } },
+            { 17, new Vector3[3] { movingPoints[8], movingPoints[16], Vector3.zero } },
+            { 18, new Vector3[3] { movingPoints[19], movingPoints[9], movingPoints[21] } },
+            { 19, new Vector3[3] { movingPoints[20], movingPoints[18], Vector3.zero } },
+            { 20, new Vector3[3] { movingPoints[19], movingPoints[14], movingPoints[21] } },
+            { 21, new Vector3[3] { movingPoints[20], movingPoints[18], Vector3.zero } }
+        };
     }
 
     public void Kill()
     {
+        // Killing enemy: playing blood splatter particles
+        // and death audio before destroying it
+
         canMove = false;
         canShoot = false;
         dirtSplatterEm.enabled = false;
@@ -286,6 +271,9 @@ public class Enemy : MonoBehaviour
 
     IEnumerator DestroyEnemyOnEnd()
     {
+        // Destroying enemy after blood splatter
+        // and death audio are done playing
+
         while (audioSource.isPlaying || bloodSplatter.isPlaying)
         {
             yield return new WaitForSeconds(0);
@@ -300,17 +288,16 @@ public class Enemy : MonoBehaviour
             collision.collider.gameObject.CompareTag("Life Up") ||
             collision.collider.gameObject.CompareTag("Enemy"))
         {
-            // Turning away from other enemy or chest or life up
+            // Turning away from another enemy or chest or life up
 
-            Vector3 nextPoint = currentMovingPoint;
-            currentMovingPoint = nextMovingPoint;
-            nextMovingPoint = nextPoint;
+            (currentMovingPoint, nextMovingPoint) = (nextMovingPoint, currentMovingPoint);
         }
         else if (collision.collider.gameObject.CompareTag("Player"))
         {
-            // Stop enemy movement when colliding with player 
+            // Stop enemy movement when colliding with player
 
             canMove = false;
+            enemyAnimator.SetBool("isMoving", false);
             dirtSplatterEm.enabled = false;
         }
     }
@@ -322,7 +309,18 @@ public class Enemy : MonoBehaviour
             // Allow enemy movement when stopping colliding with player 
 
             canMove = true;
+            enemyAnimator.SetBool("isMoving", true);
             dirtSplatterEm.enabled = true;
         }
     }
+
+    //private void OnDrawGizmos()
+    //{
+    //    Gizmos.color = Color.green;
+    //    Gizmos.DrawSphere(currentMovingPoint, 0.5f);
+    //    //Gizmos.color = Color.red;
+    //    //Gizmos.DrawLine(transform.position, transform.position + transform.forward); // Debugging GetEnemyBulletOffset
+    //    Gizmos.color = Color.blue;
+    //    Gizmos.DrawSphere(nextMovingPoint, 0.5f);
+    //}
 }

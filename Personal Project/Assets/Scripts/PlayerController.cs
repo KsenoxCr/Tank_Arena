@@ -12,6 +12,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float rotationSpeed = 150f;
     public int hp = 4;
     public bool hasKey;
+    private bool canShoot = true;
     private float shootingCooldown = 0.5f;
     private float shootingTime = 0f;
     private float damageCooldown = 1.5f;
@@ -26,8 +27,10 @@ public class PlayerController : MonoBehaviour
     private GameObject turret;
     private Rigidbody turretRb;
 
+    private readonly float turretRaysDistance = 1.85f;
     private readonly float frontRaysDistance = 1.15f;
     private readonly float backRaysDistance = 1.2f;
+    private Ray turretRay;
     private Ray frontRay;
     private Ray backRay;
 
@@ -91,7 +94,7 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         // Saving Player's movement input
-
+            
         bodyHorizontalInput = Input.GetAxis("Body_Horizontal");
         turretHorizontalInput = Input.GetAxis("Turret_Horizontal");
         verticalInput = Input.GetAxis("Vertical");
@@ -99,6 +102,7 @@ public class PlayerController : MonoBehaviour
         rb.isKinematic = verticalInput == 0 ? true : false;
 
         StopPlayerOnCollision();
+        StopShootingOnCollision();
 
         if (gameManager.isGamePlaying)
         {
@@ -117,8 +121,15 @@ public class PlayerController : MonoBehaviour
 
             if (Input.GetKey(KeyCode.Space) && Time.time - shootingTime >= shootingCooldown)
             {
-                audioSource.PlayOneShot(shootingAudio, 0.6f);
-                spawnManager.ShootBullet(turret);
+
+                // Shooting bullets if player is not colliding with wall or chest
+
+                if (canShoot)
+                {
+                    audioSource.PlayOneShot(shootingAudio, 0.6f);
+                    spawnManager.ShootBullet(turret);
+                }
+
                 shootingTime = Time.time;
             }
         }
@@ -186,6 +197,36 @@ public class PlayerController : MonoBehaviour
         healthText.text = "Health: " + hp;
     }
 
+    void StopShootingOnCollision()
+    {
+        // Stopping bullets from spawning when
+        // player is colliding with an object other than walls
+
+        turretRay = new Ray(turret.transform.position + Vector3.up,
+            turret.transform.forward);
+
+        RaycastHit turretHit;
+        if (Physics.Raycast(turretRay, out turretHit, turretRaysDistance))
+        {
+            Debug.DrawLine(turret.transform.position + Vector3.up, (turret.transform.position + Vector3.up) +
+                turret.transform.forward * turretRaysDistance, Color.red);
+
+            // Stop Player's from shooting if turret is colliding with wall or chest
+
+            if (turretHit.collider.CompareTag("Wall") || turretHit.collider.CompareTag("Chest"))
+            {
+                canShoot = false;
+            }
+        }
+        else
+        {
+            canShoot = true;
+
+            Debug.DrawLine(turret.transform.position + Vector3.up, (turret.transform.position + Vector3.up) +
+                turret.transform.forward * turretRaysDistance, Color.green);
+        }
+    }
+
     void StopPlayerOnCollision()
     {
         //Checking for forward hits
@@ -195,8 +236,6 @@ public class PlayerController : MonoBehaviour
         RaycastHit frontHit;
         if (Physics.Raycast(frontRay, out frontHit, frontRaysDistance))
         {
-            Debug.DrawLine(transform.position, frontHit.point, Color.red);
-
             // Stop Player's forward movement
             if (verticalInput > 0 && (frontHit.collider.CompareTag("Wall")
                                   || frontHit.collider.CompareTag("Enemy")
@@ -206,11 +245,6 @@ public class PlayerController : MonoBehaviour
                 verticalInput = 0;
             }
         }
-        else
-        {
-            Debug.DrawLine(transform.position, transform.position + transform.forward * frontRaysDistance, Color.green);
-        }
-
 
         //Checking for backward hits
 
@@ -230,10 +264,6 @@ public class PlayerController : MonoBehaviour
                 rb.linearVelocity = rb.angularVelocity = Vector3.zero;
                 verticalInput = 0;
             }
-        }
-        else
-        {
-            Debug.DrawLine(transform.position, transform.position - transform.forward * backRaysDistance, Color.green);
         }
     }
 

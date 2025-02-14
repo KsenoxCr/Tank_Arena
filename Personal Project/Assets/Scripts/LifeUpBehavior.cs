@@ -16,11 +16,6 @@ public class LifeUpBehavior : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
     }
 
-    void Update()
-    {
-        
-    }
-
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.collider.gameObject.CompareTag("Player") && !isUsed)
@@ -43,7 +38,7 @@ public class LifeUpBehavior : MonoBehaviour
     {
         while (audioSource.isPlaying)
         {
-            yield return new WaitForSeconds(0);
+            yield return null;
         }
 
         Destroy(gameObject);
