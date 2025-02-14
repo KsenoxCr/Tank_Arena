@@ -7,13 +7,15 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    public int round = 0;
-    public int lastRound = 25;
+    [Header("Game Parameters")]
+    [SerializeField] int round;
+    private readonly int lastRound = 25;
     public int enemyCount = 0;
     public float roundTime = 0;
-    public float startShootingCooldown = 2f;
-    public bool isGamePlaying = false;
+    public readonly float startShootingCooldown = 2f;
+    public bool isGamePlaying;
 
+    [Header("UI Elements")]
     [SerializeField] private GameObject startScreen;
     [SerializeField] private GameObject gameUi;
     [SerializeField] private GameObject gameOverScreen;
@@ -26,17 +28,17 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Button restartButton;
     [SerializeField] private Button backToTitleButton;
 
-    [SerializeField] private AudioSource audioSource;
 
     public GameObject[] movingPoints = new GameObject[22];
     public Vector3[] movingPointPositions;
     public Vector3[] cornerMovingPoints;
 
+    private AudioSource audioSource;
     private SpawnManager spawnManager;
 
     void Awake()
     {
-        // saving movingPoints positions to movingPointPositions
+        // saving movingPoints Vector3 positions to movingPointPositions
 
         movingPointPositions = new Vector3[movingPoints.Length];
 
@@ -53,9 +55,14 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        // Setting up the game
+
+        audioSource = GetComponent<AudioSource>();
+        spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
+
         newRoundText.alpha = 0; 
         round = 0;
-        spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
+
         startButton.onClick.AddListener(StartNewRound);
         restartButton.onClick.AddListener(RestartGame);
         backToTitleButton.onClick.AddListener(RestartGame);
@@ -80,17 +87,22 @@ public class GameManager : MonoBehaviour
 
     public void UpdateRound()
     {
+        // Updating round number and UI text
+
         round++;
         roundCountText.text = "Round: " + round;
-        newRoundText.text = roundCountText.text;
     }
 
     public void StartNewRound()
     {
+        // Starting a new round
+
         UpdateRound();
 
         if (round == 1)
         {
+            // Starting the game
+
             audioSource.Play();
             isGamePlaying = true;
             startScreen.SetActive(false);
@@ -99,6 +111,8 @@ public class GameManager : MonoBehaviour
         }
         else if (round > lastRound)
         {
+            // Player wins the game
+
             gameUi.SetActive(false);
             winScreen.SetActive(true);
 
@@ -107,16 +121,19 @@ public class GameManager : MonoBehaviour
 
         if (round > 1)
         {
+            // Destroying previous round's life up 
+            // and clearing taken spawn positions
+
             Destroy(GameObject.FindGameObjectWithTag("Life Up"));
             spawnManager.takenSpawnPositions.Clear();
         }
 
 
-        // Add if statement for is new round already showing
+        // Fade the new round text in and out
 
-        StartCoroutine(NewRoundTextFade(1));
-        Invoke("NewRoundFadeOut", 3);
+        StartCoroutine(NewRoundTextFade(1, round));
 
+        // Spawning enemies and chest
 
         spawnManager.SpawnEnemyWave(round);
         spawnManager.SpawnChest();
@@ -124,6 +141,8 @@ public class GameManager : MonoBehaviour
 
     public void GameOver()
     {
+        // Stop game from playing and show game over screen
+
         isGamePlaying = false;
         audioSource.Stop();
 
@@ -136,20 +155,38 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    void NewRoundFadeOut()
+    IEnumerator NewRoundTextFade(int step, int round)
     {
-        StartCoroutine(NewRoundTextFade(-1));
-    }
+        // Fading new round text in or out based on step value
 
-    IEnumerator NewRoundTextFade(float step)
-    {
-        float startOfRange = step > 0 ? 0 : 100;
-        float endOfRange = step > 0 ? 101 : -1f;
+        bool isFadeIn = step > 0;
+
+        if (isFadeIn)
+        {
+            while (newRoundText.alpha != 0)
+            {
+                yield return null;
+            }
+
+            newRoundText.text = "Round: " + round;
+        }
+
+        int startOfRange = isFadeIn ? 0 : 100;
+        int endOfRange = isFadeIn ? 101 : -1;
 
         for (float a = startOfRange; a != endOfRange; a += step)
         {
             newRoundText.alpha = a / 100;
             yield return null;
+        }
+
+        if (isFadeIn)
+        {
+            // Starting the fade out after 3 seconds
+
+            yield return new WaitForSeconds(3);
+
+            StartCoroutine(NewRoundTextFade(-1, round));
         }
     }
 }

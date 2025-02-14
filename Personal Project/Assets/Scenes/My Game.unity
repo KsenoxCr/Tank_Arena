@@ -2103,6 +2103,32 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 439558358}
   m_CullTransparentMesh: 1
+--- !u!1 &448534754 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2382023525740131522, guid: d84d23afee79117479a9eebcb4192ab2, type: 3}
+  m_PrefabInstance: {fileID: 4938160927399825354}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &448534757
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 448534754}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 0.7638808, y: 0.7144551, z: 2.4479003}
+  m_Center: {x: 0.019277385, y: 2.3023567, z: 2.5385277}
 --- !u!1 &486935057
 GameObject:
   m_ObjectHideFlags: 0
@@ -5461,8 +5487,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 0
   serializedVersion: 3
-  m_Size: {x: 0.026580077, y: 0.017922502, z: 0.051115822}
-  m_Center: {x: -0.000000026077034, y: 0.023884684, z: 0.0076284586}
+  m_Size: {x: 0.007580874, y: 0.0071783713, z: 0.024523154}
+  m_Center: {x: 0.000043349035, y: 0.023014352, z: 0.020744726}
 --- !u!1 &1531626551
 GameObject:
   m_ObjectHideFlags: 0
@@ -5509,10 +5535,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   round: 0
-  lastRound: 20
   enemyCount: 0
   roundTime: 0
-  startShootingCooldown: 2
   isGamePlaying: 0
   startScreen: {fileID: 1968458162}
   gameUi: {fileID: 1270962830}
@@ -5523,7 +5547,6 @@ MonoBehaviour:
   startButton: {fileID: 22121204}
   restartButton: {fileID: 822813741}
   backToTitleButton: {fileID: 612671620}
-  audioSource: {fileID: 1531626555}
   movingPoints:
   - {fileID: 1269140673}
   - {fileID: 1480963672}
@@ -7006,6 +7029,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2382023525740131522, guid: d84d23afee79117479a9eebcb4192ab2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 448534757}
     - targetCorrespondingSourceObject: {fileID: 8442693989215942704, guid: d84d23afee79117479a9eebcb4192ab2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1499046923}

@@ -2,31 +2,23 @@ using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class Chest : MonoBehaviour
+public class ChestBehavior : MonoBehaviour
 {
     private GameManager gameManager;
 
     private PlayerController playerController;
-
     private Animator chestAnim;
     private AudioSource audioSource;
     [SerializeField] private AudioClip chestOpenAudio;
     [SerializeField] private AudioClip roundCompleteAudio;
     [SerializeField] private ParticleSystem[] fireworks;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         playerController = GameObject.Find("Player").GetComponent<PlayerController>();
         chestAnim = GetComponentInChildren<Animator>();
         audioSource = GetComponent<AudioSource>();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -40,7 +32,7 @@ public class Chest : MonoBehaviour
 
             playerController.hasKey = false;
 
-            StartCoroutine(DestroyOnEnd());
+            StartCoroutine(DestroyAndStartRoundOnEnd());
         }
     }
 
@@ -56,7 +48,7 @@ public class Chest : MonoBehaviour
         }
     }
 
-    IEnumerator DestroyOnEnd()
+    IEnumerator DestroyAndStartRoundOnEnd()
     {
         while (!chestAnim.GetCurrentAnimatorStateInfo(0).IsName("Close")
                || audioSource.isPlaying)

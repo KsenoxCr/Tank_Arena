@@ -10,29 +10,30 @@ public class EnemyEventArgs : EventArgs
 
 public class ProjectileBehavior : MonoBehaviour
 {
-    [SerializeField] private float speed = 20f;
-    private BoxCollider bc;
+    [Header("Bullet's Settings")]
+    [SerializeField] private readonly float speed = 20f;
 
     private GameObject shooter;
-    //private PlayerController playerControllerScript;
     private Vector3 bulletDirection;
 
     [SerializeField] private GameManager gameManager;
 
     public void Initialize(GameObject shooter)
     {
-        this.shooter = shooter;
-    }
+        // Assigning the shooter to the projectile
 
-    void Start()
-    {
-        bc = GetComponent<BoxCollider>();
-        //gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        this.shooter = shooter;
     }
 
     void Update()
     {
-        Debug.DrawLine(transform.position, transform.position + transform.forward, Color.blue);
+         MoveBullet();
+    }
+
+    void MoveBullet()
+    {
+        // Moving bullet at shooter's forward direction
+
         transform.Translate(transform.forward * speed * Time.deltaTime, Space.World);
     }
 
@@ -42,18 +43,23 @@ public class ProjectileBehavior : MonoBehaviour
             other.gameObject.CompareTag("Chest") ||
             other.gameObject.CompareTag("Key"))
         {
+            // Destroying the bullet 
+
             Destroy(gameObject);
         }
         else if (other.gameObject.CompareTag("Enemy") && shooter.CompareTag("Player"))
         {
+            // Destroying the bullet and killing the enemy
+
             Destroy(gameObject);
 
-            Enemy enemy = other.gameObject.GetComponent<Enemy>();
-            enemy.Kill();
+            EnemyBehavior enemyBehavior = other.gameObject.GetComponent<EnemyBehavior>();
+            enemyBehavior.Kill();
         }
         else if (other.gameObject.CompareTag("Player") && shooter.CompareTag("Enemy")) 
-         //The object of type 'UnityEngine.GameObject' has been destroyed but you are still trying to access it.
         {
+            // Destroying the bullet and damaging the player
+
             Destroy(gameObject);
 
             PlayerController playerController = other.gameObject.GetComponent<PlayerController>();

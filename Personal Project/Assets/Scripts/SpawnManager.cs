@@ -8,10 +8,6 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using Vector3 = UnityEngine.Vector3;
 
-// 1. Change movingPoints to GameManager and add each point on inspector
-// 2. Move movingPointPositions and its loop to GameManager
-// 3. Refactor previous uses of those variables to GameManager.variable
-
 public class SpawnManager : MonoBehaviour
 {
     private GameManager gameManager;
@@ -28,38 +24,29 @@ public class SpawnManager : MonoBehaviour
 
     void Awake()
     {
+        // Setting a reference to GameManager
+
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
 
     void Start()
     {
-        // subscribing to the projectileBehaviour AllEnemiesKilled event
+        // Subscribing to the AllEnemiesKilled event
 
-        Enemy.AllEnemiesKilled += OnAllEnemiesKilled;
+        EnemyBehavior.AllEnemiesKilled += OnAllEnemiesKilled;
     }
 
     void OnDisable()
     {
-        Enemy.AllEnemiesKilled -= OnAllEnemiesKilled;
-    }
+        // Unsubscribing to the AllEnemiesKilled event
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        EnemyBehavior.AllEnemiesKilled -= OnAllEnemiesKilled;
     }
-
-    //private void OnDrawGizmos()
-    //{
-    //    Gizmos.color = Color.yellow;
-    //    Gizmos.DrawCube(cornerMovingPoints[0], new Vector3(1, 1, 1));
-    //    Gizmos.DrawCube(cornerMovingPoints[1], new Vector3(1, 1, 1));
-    //    Gizmos.DrawCube(cornerMovingPoints[2], new Vector3(1, 1, 1));
-    //    Gizmos.DrawCube(cornerMovingPoints[3], new Vector3(1, 1, 1));
-    //}
 
     public void SpawnEnemyWave(int round)
     {
+        // Spawning Enemy wave based on round number
+
         gameManager.roundTime = Time.time;
 
         if (round >= 1 && round < 3)
@@ -86,6 +73,9 @@ public class SpawnManager : MonoBehaviour
             SpawnLifeUp();
         }
 
+        // Spawning appropriate number of enemies for the current round
+        
+        //Invariant: i is the amount of enemies spawned
         for (int i = 0; i < gameManager.enemyCount; i++)
         {
             Instantiate(enemyPrefab, RandomCorner(), enemyPrefab.transform.rotation);
@@ -94,6 +84,8 @@ public class SpawnManager : MonoBehaviour
 
     public void SpawnChest()
     {
+        // Spawning chest to a random moving point, on layer 2-3
+
         Vector3 spawningPosition = RandomMovingPoint(2, prevChestPosition);
         Instantiate(chestPrefab, spawningPosition, chestPrefab.transform.rotation);
         prevChestPosition = spawningPosition;
@@ -101,18 +93,23 @@ public class SpawnManager : MonoBehaviour
 
     public void SpawnLifeUp()
     {
+        // Spawning life up to a random moving point, on layer 1-3
+
         Vector3 spawningPosition = RandomMovingPoint(1, prevLifeUpPosition);
         Instantiate(lifeUpPrefab, spawningPosition, lifeUpPrefab.transform.rotation);
         prevLifeUpPosition = spawningPosition;
     }
     void SpawnKey(Vector3 position)
     {
+        // Spawning key on the position of the last killed enemy
+
         Instantiate(keyPrefab, position, keyPrefab.transform.rotation);
     }
 
     Vector3 RandomMovingPoint(int layer, Vector3 prevPoint)
     {
-        // Choosing a random moving point
+        // Choosing a new random moving point
+        // that not taken yet on the current round
 
         Vector3 randomMovingPoint;
         int minInclusive = layer == 2 ? 8 : 0;
@@ -131,7 +128,8 @@ public class SpawnManager : MonoBehaviour
 
     Vector3 RandomCorner()
     {
-        // Picking a random corner out of moving points
+        // Picking a random corner out of corner moving points 
+        // that not taken yet on the current round
 
         Vector3 randomCorner;
 
@@ -149,7 +147,8 @@ public class SpawnManager : MonoBehaviour
 
     public void ShootBullet(GameObject shooter)
     {
-        // Spawning a bullet infront of shooter
+        // Spawning a bullet in front of shooter 
+        // with an offset based on the shooter type
 
         Vector3 offset;
 
@@ -168,8 +167,8 @@ public class SpawnManager : MonoBehaviour
 
     Vector3 GetEnemyBulletOffset(GameObject gameObj)
     {
-        // Getting enemy's bullet spawn positions 
-        // offset based on which direction enemy is heading
+        // Choosing offset for enemy's bullet
+        // based on which direction enemy is heading
 
         Vector3 localForward = gameObj.transform.forward;
         Vector3 roundedLocalForward = new Vector3(Mathf.Round(localForward.x), 
