@@ -14,12 +14,15 @@ public class GameManager : MonoBehaviour
     public float roundTime = 0;
     public readonly float startShootingCooldown = 2f;
     public bool isGamePlaying;
+    private bool gameStarted;
 
     [Header("UI Elements")]
     [SerializeField] private GameObject startScreen;
     [SerializeField] private GameObject gameUi;
     [SerializeField] private GameObject gameOverScreen;
     [SerializeField] private GameObject winScreen;
+    [SerializeField] private GameObject pauseScreen;
+    [SerializeField] private GameObject guideScreen;
 
     [SerializeField] private TextMeshProUGUI roundCountText;
     [SerializeField] private TextMeshProUGUI newRoundText;
@@ -27,6 +30,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Button startButton;
     [SerializeField] private Button restartButton;
     [SerializeField] private Button backToTitleButton;
+    [SerializeField] private Button continueButton;
+    [SerializeField] private Button guideButton;
+    [SerializeField] private Button guideButton2;
+    [SerializeField] private Button exitButton;
+    [SerializeField] private Button exitButton2;
+    [SerializeField] private Button returnButton;
 
 
     public GameObject[] movingPoints = new GameObject[22];
@@ -35,6 +44,8 @@ public class GameManager : MonoBehaviour
 
     private AudioSource audioSource;
     private SpawnManager spawnManager;
+
+    private GameObject guideCaller;
 
     void Awake()
     {
@@ -66,6 +77,13 @@ public class GameManager : MonoBehaviour
         startButton.onClick.AddListener(StartNewRound);
         restartButton.onClick.AddListener(RestartGame);
         backToTitleButton.onClick.AddListener(RestartGame);
+
+        continueButton.onClick.AddListener(PauseGame);
+        guideButton.onClick.AddListener(() => OpenGuide(startScreen));
+        guideButton2.onClick.AddListener(() => OpenGuide(pauseScreen));
+        exitButton.onClick.AddListener(QuitGame);
+        exitButton2.onClick.AddListener(QuitGame);
+        returnButton.onClick.AddListener(ReturnFromGuide);
     }
 
     void Update()
@@ -103,8 +121,9 @@ public class GameManager : MonoBehaviour
         {
             // Starting the game
 
-            audioSource.Play();
+            gameStarted = true;
             isGamePlaying = true;
+            audioSource.Play();
             startScreen.SetActive(false);
             gameUi.SetActive(true);
             newRoundText.gameObject.SetActive(true);
@@ -139,6 +158,46 @@ public class GameManager : MonoBehaviour
         spawnManager.SpawnChest();
     }
 
+    public void PauseGame()
+    {
+        // Pause or continue the game
+
+        if (!isGamePlaying && gameStarted) {
+            Time.timeScale = 1;
+            isGamePlaying = true;
+            audioSource.Play();
+            pauseScreen.SetActive(false);
+        } else if (isGamePlaying) {
+            Time.timeScale = 0;
+            isGamePlaying = false;
+            audioSource.Stop();
+            pauseScreen.SetActive(true);
+        }
+    }
+
+    void OpenGuide(GameObject menu)
+    {
+        if (menu == startScreen) {
+            startScreen.SetActive(false);
+        } else {
+            pauseScreen.SetActive(false);
+        }
+
+        guideScreen.SetActive(true);
+        guideCaller = menu;
+    }
+
+    void ReturnFromGuide()
+    {
+        guideScreen.SetActive(false);
+
+        if (guideCaller == startScreen) {
+            startScreen.SetActive(true);
+        } else {
+            pauseScreen.SetActive(true);
+        }
+    }
+
     public void GameOver()
     {
         // Stop game from playing and show game over screen
@@ -153,6 +212,11 @@ public class GameManager : MonoBehaviour
     void RestartGame()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    void QuitGame()
+    {
+        Application.Quit();
     }
 
     IEnumerator NewRoundTextFade(int step, int round)

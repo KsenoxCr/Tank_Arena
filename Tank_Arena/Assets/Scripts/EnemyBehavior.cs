@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+#if UNITY_EDITOR
 using Unity.VisualScripting.ReorderableList;
+#endif
 using UnityEngine;
 using Random = UnityEngine.Random;
 using Color = UnityEngine.Color;
@@ -89,7 +91,7 @@ public class EnemyBehavior : MonoBehaviour
     {
         // Moving enemy towards next movingPoint
 
-        if (canMove)
+        if (canMove && gameManager.isGamePlaying)
         {
             MoveToNextMovingPoint(currentMovingPoint, nextMovingPoint);
         }
@@ -172,7 +174,6 @@ public class EnemyBehavior : MonoBehaviour
 
         return interpolatedPos;
     }
-
 
     Vector3 GetNextMovingPoint(Vector3[] possibilities)
     {

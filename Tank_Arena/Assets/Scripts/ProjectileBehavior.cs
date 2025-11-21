@@ -1,6 +1,8 @@
 using System;
 using System.IO.Pipes;
+#if UNITY_EDITOR
 using TMPro.EditorUtilities;
+#endif
 using UnityEngine;
 
 public class EnemyEventArgs : EventArgs

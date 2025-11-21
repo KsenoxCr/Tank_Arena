@@ -17,6 +17,8 @@ public class PlayerController : MonoBehaviour
     private float shootingTime = 0f;
     private float damageCooldown = 1.5f;
     private float damageTime = 0f;
+    private float pauseTime = 0f;
+    private float pauseCooldown = 0.5f;
 
     private Rigidbody rb;
     private BoxCollider bc;
@@ -55,6 +57,8 @@ public class PlayerController : MonoBehaviour
 
     private float bodyHorizontalInput;
     private float turretHorizontalInput;
+    private float turretHorizontalInput2;
+    private float finalHorizontalInput;
     [SerializeField] private float verticalInput;
     private float reverse;
     private Vector3 eulerAngleVelocity;
@@ -70,7 +74,7 @@ public class PlayerController : MonoBehaviour
         turretRb = turret.GetComponent<Rigidbody>();
         turretRb.automaticCenterOfMass = false;
         //turretRb.centerOfMass = Vector3.zero; //Doesn't change to 0,0,0 for some reason, had to change in inspector
-        
+
         eulerAngleVelocity = new Vector3(0, rotationSpeed, 0);
     }
 
@@ -94,9 +98,13 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         // Saving Player's movement input
-            
+
         bodyHorizontalInput = Input.GetAxis("Body_Horizontal");
         turretHorizontalInput = Input.GetAxis("Turret_Horizontal");
+        turretHorizontalInput2 = Input.GetAxis("Turret_Horizontal2");
+
+        finalHorizontalInput = Mathf.Clamp(turretHorizontalInput + turretHorizontalInput2, -1f, 1f);
+
         verticalInput = Input.GetAxis("Vertical");
 
         rb.isKinematic = verticalInput == 0 ? true : false;
@@ -110,18 +118,24 @@ public class PlayerController : MonoBehaviour
             MovePlayer();
         }
     }
-    
+
     void Update()
     {
+        // Pausing and Continuing the Game
+
+        if (Input.GetKey(KeyCode.Escape) && Time.time - pauseTime >= pauseCooldown) {
+            gameManager.PauseGame();
+            pauseTime = Time.time;
+        }
+
         if (gameManager.isGamePlaying)
         {
             EnableTireSmokeParticles();
 
             // Player Shooting
 
-            if (Input.GetKey(KeyCode.Space) && Time.time - shootingTime >= shootingCooldown)
+            if ((Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.Space)) && Time.time - shootingTime >= shootingCooldown)
             {
-
                 // Shooting bullets if player is not colliding with wall or chest
 
                 if (canShoot)
@@ -155,7 +169,7 @@ public class PlayerController : MonoBehaviour
     {
         // Turret Movement
 
-        Quaternion deltaRotation = Quaternion.Euler(eulerAngleVelocity * Time.fixedDeltaTime * turretHorizontalInput);
+        Quaternion deltaRotation = Quaternion.Euler(eulerAngleVelocity * Time.fixedDeltaTime * finalHorizontalInput);
         turretRb.MoveRotation(turretRb.rotation * deltaRotation);
     }
 
