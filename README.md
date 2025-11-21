@@ -8,12 +8,25 @@ Tank Arena is an action-packed top-down tank shooter where you battle waves of e
 
 ## How to Start Playing
 
-### Prerequisites
+### Option 1: Download Pre-built Release (Recommended)
+
+1. Go to the [Releases](https://github.com/KsenoxCr/Tank_Arena/releases) section of this repository
+2. Download the latest release for your platform:
+   - Windows: `Tank_Arena_Windows.zip`
+   - Linux: `Tank_Arena_Linux.zip`
+3. Extract the zip file to a folder of your choice
+4. Run the executable:
+   - Windows: Double-click `Tank_Arena.exe`
+   - Linux: Run `./Tank_Arena.x86_64` (you may need to make it executable first with `chmod +x Tank_Arena.x86_64`)
+
+### Option 2: Build from Source
+
+#### Prerequisites
 
 - Unity 2021 or later
 - Windows, macOS, or Linux operating system
 
-### Running the Game
+#### Running the Game
 
 1. Clone or download this repository
 2. Open the project in Unity
